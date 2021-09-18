@@ -349,7 +349,12 @@ from∘dblb (m x1) = refl
 -- Hint: induction on both m and n is needed.
 
 {--
-Case split m and n at the same time, we got a long list of code below:
+Case split m and n at the same time, we got a long list of code below and most cases are refl.
+When reduce some cases to one case, the goal of the reduced case is no longer refl.
+Although it seems redundant, we prefer to split these cases rather than condense them since it easier to prove. 
+--}
+
+bin-+-linc : ∀ (m n : Bin-ℕ) → (inc m) bin-+ n ≡ inc (m bin-+ n)
 bin-+-linc bits bits = refl
 bin-+-linc bits (n x0) = refl
 bin-+-linc bits (n x1) = refl
@@ -357,22 +362,21 @@ bin-+-linc (m x0) bits = refl
 bin-+-linc (m x0) (n x0) = refl
 bin-+-linc (m x0) (n x1) = refl
 bin-+-linc (m x1) bits = refl
-bin-+-linc (m x1) (n x0) = {!  !} --goal: ((inc m bin-+ n) x0) ≡ (inc (m bin-+ n) x0)
-bin-+-linc (m x1) (n x1) = {!   !} --goal: ((inc m bin-+ n) x1) ≡ (inc (m bin-+ n) x1)
---}
-
-bin-+-linc : ∀ (m n : Bin-ℕ) → (inc m) bin-+ n ≡ inc (m bin-+ n)
-bin-+-linc bits n = {!   !}
-bin-+-linc m bits = {!   !}
-bin-+-linc (m x0) n = {!   !}
-bin-+-linc (m x1) (n x0) = {!  !} 
-bin-+-linc (m x1) (n x1) = {!   !}
+bin-+-linc (m x1) (n x0) rewrite bin-+-linc m n = refl --goal before rewrite: ((inc m bin-+ n) x0) ≡ (inc (m bin-+ n) x0)
+bin-+-linc (m x1) (n x1) rewrite bin-+-linc m n = refl --goal before rewrite: ((inc m bin-+ n) x1) ≡ (inc (m bin-+ n) x1)
 
 -- 747 exercise: PlusUnaryBinary (2 points)
 -- This theorem relates unary and binary addition.
 
+{--
+The second case has goal: inc (tob (m + n)) ≡ (inc (tob m) bin-+ tob n)
+By induction we can simplify it.
+"rewrite to∘+ m n" the has goal: inc (tob m bin-+ tob n) ≡ (inc (tob m) bin-+ tob n),
+which is symmetric of above rule: bin-+-linc (tob m) (tob n)
+--}
 to∘+ : ∀ (m n : ℕ) → tob (m + n) ≡ tob m bin-+ tob n
-to∘+ m n = {!!}
+to∘+ zero n = refl
+to∘+ (suc m) n rewrite to∘+ m n | sym (bin-+-linc (tob m) (tob n)) = refl -- sym (bin-+-linc (tob m) )
 
 -- This ends the extended exercise.
 
