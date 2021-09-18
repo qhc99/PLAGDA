@@ -198,10 +198,23 @@ self-is-self-*-1 (suc n) =
 
 -- 747/PLFA exercise: MonusAssocish (2 points)
 -- Show a form of associativity for monus.
+{--
+Definition of ∸ is:
+_∸_ : ℕ → ℕ → ℕ
+m     ∸ zero   =  m
+zero  ∸ suc n  =  zero
+suc m ∸ suc n  =  m ∸ n
 
+Definition above gives us a clue that we can try induction both on m and n according to the thrid rule of ∸, 
+because then we can have "suc m" and "suc n" at the same time.
+When we see the goal of fourth rule below: m ∸ n ∸ p ≡ m ∸ (n + p).
+It is exactly the induction we want, which can not be found when call induction only on one variable.
+--}
 ∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
-∸-+-assoc zero n p rewrite 0∸n≡0 n | 0∸n≡0 p | 0∸n≡0 (n + p)  = refl
-∸-+-assoc (suc m) n p = {!   !}
+∸-+-assoc zero zero p = refl
+∸-+-assoc zero (suc n) p rewrite 0∸n≡0 p = refl
+∸-+-assoc (suc m) zero p = refl
+∸-+-assoc (suc m) (suc n) p rewrite ∸-+-assoc  m n p = refl
 --∸-+-assoc m n zero rewrite +-identity n = refl
 --∸-+-assoc m n (suc p) = {!   !}
 
