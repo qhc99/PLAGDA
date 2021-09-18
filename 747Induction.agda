@@ -190,7 +190,8 @@ self-is-self-*-1 (suc n) =
 -- PLFA asks "Did your proof require induction?"
 -- (which should give you an indication of the expected answer).
 
---Since in the proof of second case we have not used the knowledge of "zero ∸ m ≡ zero", the proof does not require induction.
+--Since in the proof of second case we have not used the knowledge of "zero ∸ m ≡ zero", 
+--the proof does not require induction.
 0∸n≡0 : ∀ (m : ℕ) → zero ∸ m ≡ zero
 0∸n≡0 zero = refl
 0∸n≡0 (suc m) = refl
@@ -198,10 +199,11 @@ self-is-self-*-1 (suc n) =
 -- 747/PLFA exercise: MonusAssocish (2 points)
 -- Show a form of associativity for monus.
 
---Goal of first case: m ∸ n ≡ m ∸ (n + zero)
 ∸-+-assoc : ∀ (m n p : ℕ) → m ∸ n ∸ p ≡ m ∸ (n + p)
-∸-+-assoc m n zero rewrite +-identity n = refl
-∸-+-assoc m n (suc p) = {!   !}
+∸-+-assoc zero n p rewrite 0∸n≡0 n | 0∸n≡0 p | 0∸n≡0 (n + p)  = refl
+∸-+-assoc (suc m) n p = {!   !}
+--∸-+-assoc m n zero rewrite +-identity n = refl
+--∸-+-assoc m n (suc p) = {!   !}
 
 -- PLFA exercise (stretch): distributive and associative laws for exponentiation.
 

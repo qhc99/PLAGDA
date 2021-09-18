@@ -85,6 +85,11 @@ _ =
 -- Define exponentiation (m raised to the power n).
 -- 0 ^ 0 = 1 for this exercise.
 
+{--
+Since we have definitions of multiplication, induction is a good choice.
+The first case is "suc zero" because "0 ^ 0 = 1 "
+By definition of power, we have m ^ (n + 1) = m * m ^ n.
+--}
 _^_ : ℕ → ℕ → ℕ
 m ^ zero =  suc zero  
 m ^ suc n = m * (m ^ n)  
@@ -158,7 +163,7 @@ For example, given a sequence "bits x1 x0 x1", variable "other" should be "bits 
 inc : Bin-ℕ → Bin-ℕ
 inc bits = bits x1 -- increment of bin-zero is bin-one, which is "bits x1" according to context above
 inc (other x0) = (other x1) -- when right side is 0, just flip it to 1 and then finish
-inc (other x1) = ((inc other) x0) -- when right side is 1, flip it to 0 and then increse other part
+inc (other x1) = ((inc other) x0) -- when right side is 1, flip it to 0 and then increse the other part
 
 -- An example/test of increment (you should create others).
 
@@ -184,12 +189,12 @@ tob zero =  bits -- in the context above, "bits" is bin-zero, so here should fil
 tob (suc m) =  inc (tob m) -- successor of decimal number equals increment of equivalent binary number
 
 {--
-binary number a b c d equals (d * 2^0 + c * 2^1 + b * 2^2 + a * 2^3) = 2 * a + (2 * b + (2 * c + (d)))
-the following two rules evaluate type Bin-ℕ in accordance with the right term above from inner to outer.
+Binary number a b c d equals (d * 2^0 + c * 2^1 + b * 2^2 + a * 2^3) = 2 * a + (2 * b + (2 * c + (d))).
+The last two rules evaluate type Bin-ℕ according to the right term above from inner to outer.
 --}
 fromb : Bin-ℕ → ℕ
 fromb bits = zero
-fromb (n x0) = dbl (fromb n)  -- 2 * next-term + current-bit = 2 * next-term since x0 is 0
+fromb (n x0) = dbl (fromb n)  -- 2 * next-term + current-bit = 2 * next-term,  since x0 is 0
 fromb (n x1) = suc (dbl (fromb n)) -- 2 * next-term + current-bit = 2 * next-term + 1 since x1 is 1
 
 -- A couple of examples/tests (you should create others).
@@ -209,7 +214,7 @@ _ = refl
 It seems that the code below is redundant because one line of code is highlighted by editor, but I cannot simplify it further.
 The last 4 cases below is the direct implementation of binary addition.
 Evaluation goes from right to left bit by bit. When overflow ocurrs in the current bit, it carries 1 to the next evaluation process.
-So call inc on next part of binary sequence.
+So we call inc on next part of binary sequence, That is a recursive process.
 --}
 _bin-+_ : Bin-ℕ → Bin-ℕ → Bin-ℕ
 bits bin-+ n = n -- base cases, one of two binary decay to "bits" when they have different length
@@ -218,9 +223,6 @@ m bin-+ bits = m
 (m x0) bin-+ (n x1) = (m bin-+ n) x1
 (m x1) bin-+ (n x0) = (m bin-+ n) x1
 (m x1) bin-+ (n x1) = (inc (m bin-+ n)) x0 -- final case which carry 1 into former part
-
-
-
 
 
 -- Tests can use to/from, or write out binary constants as below.
