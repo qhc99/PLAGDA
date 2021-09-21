@@ -104,6 +104,7 @@ data _<_ : ℕ → ℕ → Set where
     → suc m < suc n
 
 -- Excercise
+--<-trans
 <-trans : ∀ {m n p : ℕ}
   → m < n
   → n < p
@@ -122,10 +123,16 @@ data _<_ : ℕ → ℕ → Set where
   → p < q
     -------------
   → m + p < n + q
-+-mono-< m<n p<q = {!  !}
++-mono-< {zero} {suc n} {p} {q} z<s p<q = {!   !}
++-mono-< {suc m} {suc n} {p} {q} (s<s m<n) p<q = {!   !}
 
 --Excercise
 --≤-iff-<
+
+
+-- Excercise
+--<-trans-revisited
+
 
 data even : ℕ → Set
 data odd  : ℕ → Set
@@ -165,6 +172,7 @@ e+e≡e (suc om) en  =  suc (o+e≡o om en)
 
 o+e≡o (suc em) en  =  suc (e+e≡e em en)
 
+
 -- Excercise
 -- o+o≡e
 o+o≡e : ∀ {m n : ℕ}
@@ -172,7 +180,7 @@ o+o≡e : ∀ {m n : ℕ}
   → odd n
     -----------
   → even (m + n)
-o+o≡e (suc x) on = {!cong suc (o+e≡o on x) !}
+o+o≡e {suc m} {n} (suc x) on rewrite +-comm m n = suc (o+e≡o on x)
 
 
 --Excercise
