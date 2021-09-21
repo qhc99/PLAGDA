@@ -42,7 +42,7 @@ inv-z≤n : ∀ {m : ℕ}
     --------
   → m ≡ zero
 
-inv-z≤n z≤n = {!!}
+inv-z≤n z≤n = refl
 
 -- Properties.
 
@@ -52,7 +52,8 @@ inv-z≤n z≤n = {!!}
     -----
   → n ≤ n
 
-≤-refl = {!!}
+≤-refl {zero} = z≤n
+≤-refl {suc n} = s≤s (≤-refl {n})
 
 -- Transitivity.
 
@@ -62,7 +63,8 @@ inv-z≤n z≤n = {!!}
     -----
   → m ≤ p
 
-≤-trans m≤n n≤p = {!!}
+≤-trans z≤n n≤p = z≤n
+≤-trans (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans m≤n n≤p)
 
 ≤-trans′ : ∀ (m n p : ℕ) -- without implicit arguments
   → m ≤ n
