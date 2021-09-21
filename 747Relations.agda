@@ -63,7 +63,7 @@ inv-z≤n z≤n = refl
     -----
   → m ≤ p
 
-≤-trans z≤n n≤p = z≤n
+≤-trans z≤n n≤p = z≤n -- n≤p is not used, it can be wrote as _
 ≤-trans (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans m≤n n≤p)
 
 ≤-trans′ : ∀ (m n p : ℕ) -- without implicit arguments
@@ -72,7 +72,10 @@ inv-z≤n z≤n = refl
     -----
   → m ≤ p
 
-≤-trans′ m n p m≤n n≤p = {!!}
+≤-trans′ zero n p m≤n n≤p = z≤n
+--≤-trans′ (suc m) zero zero () n≤p
+--≤-trans′ (suc m) zero (suc p) () n≤p
+≤-trans′ (suc m) (suc n) (suc p) (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans′ m n p m≤n n≤p)
 
 -- Antisymmetry.
 
@@ -82,7 +85,8 @@ inv-z≤n z≤n = refl
     -----
   → m ≡ n
 
-≤-antisym m≤n n≤m = {!!}
+≤-antisym z≤n z≤n = refl
+≤-antisym (s≤s m≤n) (s≤s n≤m) = {!   !} --cong suc (≤-antisym m≤n n≤m) -- why cong?
 
 -- Total ordering.
 
@@ -117,10 +121,14 @@ data Total′ : ℕ → ℕ → Set where
 -- Showing that ≤ is a total order.
 
 ≤-total : ∀ (m n : ℕ) → Total m n -- introducing with clause
-≤-total m n = {!!}
+≤-total zero n = forward z≤n --toggle implicit argyments C-x C-h
+≤-total (suc m) zero = {!   !}
+≤-total (suc m) (suc n) = {!   !}
 
 ≤-total′ : ∀ (m n : ℕ) → Total m n -- with helper function and where
-≤-total′ m n = {!!}
+≤-total′ zero n = {!   !}
+≤-total′ (suc m) zero = {!   !}
+≤-total′ (suc m) (suc n) = {!   !}
 
 -- Splitting on n first gives different code (see PLFA or try it yourself).
 

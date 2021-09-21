@@ -117,12 +117,12 @@ data _<_ : ℕ → ℕ → Set where
 
 --Excercise
 --+-mono-<
-+-mono-< : ∀ (m n p q : ℕ)
++-mono-< : ∀ {m n p q : ℕ}
   → m < n
   → p < q
     -------------
   → m + p < n + q
-+-mono-< m (suc n) p q m<n p<q = {!   !}
++-mono-< m<n p<q = {!  !}
 
 --Excercise
 --≤-iff-<
@@ -172,7 +172,7 @@ o+o≡e : ∀ {m n : ℕ}
   → odd n
     -----------
   → even (m + n)
-o+o≡e (suc x) on = {!   !}
+o+o≡e (suc x) on = {!cong suc (o+e≡o on x) !}
 
 
 --Excercise
