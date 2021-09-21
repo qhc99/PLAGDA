@@ -172,7 +172,7 @@ o+o≡e : ∀ {m n : ℕ}
   → odd n
     -----------
   → even (m + n)
-o+o≡e (suc x) on = {! suc (o+e≡o on x)  !}
+o+o≡e (suc x) on = {!   !}
 
 
 --Excercise
