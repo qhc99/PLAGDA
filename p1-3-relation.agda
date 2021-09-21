@@ -39,6 +39,8 @@ infix 4 _≤_
     -----
   → m ≡ n
 ≤-antisym z≤n       z≤n        =  refl
+
+--Excercise
 --≤-antisym z≤n       s≤s        =  ?
 {--
 Error:
@@ -73,3 +75,105 @@ data Total (m n : ℕ) : Set where
   → n + p ≤ n + q
 +-monoʳ-≤ zero    p q p≤q  =  p≤q
 +-monoʳ-≤ (suc n) p q p≤q  =  s≤s (+-monoʳ-≤ n p q p≤q)
+
++-monoˡ-≤ : ∀ (m n p : ℕ)
+  → m ≤ n
+    -------------
+  → m + p ≤ n + p
++-monoˡ-≤ m n p m≤n  rewrite +-comm m p | +-comm n p  = +-monoʳ-≤ p m n m≤n
+
+
++-mono-≤ : ∀ (m n p q : ℕ)
+  → m ≤ n
+  → p ≤ q
+    -------------
+  → m + p ≤ n + q
++-mono-≤ m n p q m≤n p≤q  =  ≤-trans (+-monoˡ-≤ m n p m≤n) (+-monoʳ-≤ n p q p≤q)
+
+infix 4 _<_
+
+data _<_ : ℕ → ℕ → Set where
+
+  z<s : ∀ {n : ℕ}
+      ------------
+    → zero < suc n
+
+  s<s : ∀ {m n : ℕ}
+    → m < n
+      -------------
+    → suc m < suc n
+
+-- Excercise
+<-trans : ∀ {m n p : ℕ}
+  → m < n
+  → n < p
+    -----
+  → m < p
+<-trans z<s (s<s n<p) = z<s
+<-trans (s<s m<n) (s<s n<p) = s<s (<-trans m<n n<p)
+
+-- Excercise
+--trichotomy
+
+--Excercise
+--+-mono-<
++-mono-< : ∀ (m n p q : ℕ)
+  → m < n
+  → p < q
+    -------------
+  → m + p < n + q
++-mono-< m (suc n) p q m<n p<q = {!   !}
+
+--Excercise
+--≤-iff-<
+
+data even : ℕ → Set
+data odd  : ℕ → Set
+
+data even where
+
+  zero :
+      ---------
+      even zero
+
+  suc  : ∀ {n : ℕ}
+    → odd n
+      ------------
+    → even (suc n)
+
+data odd where
+
+  suc  : ∀ {n : ℕ}
+    → even n
+      -----------
+    → odd (suc n)
+
+e+e≡e : ∀ {m n : ℕ}
+  → even m
+  → even n
+    ------------
+  → even (m + n)
+
+o+e≡o : ∀ {m n : ℕ}
+  → odd m
+  → even n
+    -----------
+  → odd (m + n)
+
+e+e≡e zero     en  =  en
+e+e≡e (suc om) en  =  suc (o+e≡o om en) 
+
+o+e≡o (suc em) en  =  suc (e+e≡e em en)
+
+-- Excercise
+-- o+o≡e
+o+o≡e : ∀ {m n : ℕ}
+  → odd m
+  → odd n
+    -----------
+  → even (m + n)
+o+o≡e (suc x) on = {! suc (o+e≡o on x)  !}
+
+
+--Excercise
+--Bin-predicates
