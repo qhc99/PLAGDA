@@ -118,13 +118,32 @@ data _<_ : ℕ → ℕ → Set where
 
 --Excercise
 --+-mono-<
-+-mono-< : ∀ {m n p q : ℕ}
+
++-monoʳ-< : ∀ (n p q : ℕ)
+  → p < q
+    -------------
+  → n + p < n + q
++-monoʳ-< zero    p q p<q  =  p<q
++-monoʳ-< (suc n) p q p<q  =  s<s (+-monoʳ-< n p q p<q)
+
++-monoˡ-< : ∀ (m n p : ℕ)
+  → m < n
+    -------------
+  → m + p < n + p
++-monoˡ-< m n p m<n  rewrite +-comm m p | +-comm n p  = +-monoʳ-< p m n m<n
+{--
+<-trans : ∀ {m n p : ℕ}
+  → m < n
+  → n < p
+    -----
+  → m < p
+--}
++-mono-< : ∀ (m n p q : ℕ)
   → m < n
   → p < q
     -------------
   → m + p < n + q
-+-mono-< {zero} {suc n} {p} {q} z<s p<q = {!   !}
-+-mono-< {suc m} {suc n} {p} {q} (s<s m<n) p<q = {!   !}
++-mono-< m n p q m<n p<q = <-trans (+-monoˡ-< m n p m<n) (+-monoʳ-< n p q p<q)
 
 --Excercise
 --≤-iff-<
