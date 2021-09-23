@@ -206,22 +206,3 @@ _∘_ : ∀ {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {B : Set ℓ₂} {C 
   → (B → C) → (A → B) → A → C
 (g ∘ f) x  =  g (f x)
 
-data _×_ (A B : Set) : Set where
-
-  ⟨_,_⟩ :
-      A
-    → B
-      -----
-    → A × B
-
-proj₁ : ∀ {A B : Set}
-  → A × B
-    -----
-  → A
-proj₁ ⟨ x , y ⟩ = x
-
-proj₂ : ∀ {A B : Set}
-  → A × B
-    -----
-  → B
-proj₂ ⟨ x , y ⟩ = y
