@@ -23,9 +23,6 @@ data _≤_ : ℕ → ℕ → Set where
 _ : 2 ≤ 4
 _ = s≤s (s≤s z≤n)
 
-_ : 3 ≤ 7
-_ = s≤s (s≤s (s≤s z≤n))
-
 infix 4 _≤_
 
 -- Inversion.
@@ -53,7 +50,7 @@ inv-z≤n z≤n = refl
   → n ≤ n
 
 ≤-refl {zero} = z≤n
-≤-refl {suc n} = s≤s (≤-refl {n})
+≤-refl {suc n} = s≤s ≤-refl
 
 -- Transitivity.
 
@@ -63,7 +60,7 @@ inv-z≤n z≤n = refl
     -----
   → m ≤ p
 
-≤-trans z≤n n≤p = z≤n -- n≤p is not used, it can be wrote as _
+≤-trans z≤n n≤p = z≤n
 ≤-trans (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans m≤n n≤p)
 
 ≤-trans′ : ∀ (m n p : ℕ) -- without implicit arguments
@@ -72,10 +69,9 @@ inv-z≤n z≤n = refl
     -----
   → m ≤ p
 
-≤-trans′ zero n p m≤n n≤p = z≤n
---≤-trans′ (suc m) zero zero () n≤p
---≤-trans′ (suc m) zero (suc p) () n≤p
-≤-trans′ (suc m) (suc n) (suc p) (s≤s m≤n) (s≤s n≤p) = s≤s (≤-trans′ m n p m≤n n≤p)
+≤-trans′ .0 n p z≤n n≤p = z≤n
+≤-trans′ .(suc m) .(suc n) (suc p) (s≤s {m} {n} m≤n) (s≤s n≤p)
+ = s≤s (≤-trans′ m n p m≤n n≤p)
 
 -- Antisymmetry.
 
@@ -86,7 +82,8 @@ inv-z≤n z≤n = refl
   → m ≡ n
 
 ≤-antisym z≤n z≤n = refl
-≤-antisym (s≤s m≤n) (s≤s n≤m) = {!   !} --cong suc (≤-antisym m≤n n≤m) -- why cong?
+≤-antisym (s≤s m≤n) (s≤s n≤m)
+  rewrite ≤-antisym m≤n n≤m = refl
 
 -- Total ordering.
 
@@ -121,14 +118,21 @@ data Total′ : ℕ → ℕ → Set where
 -- Showing that ≤ is a total order.
 
 ≤-total : ∀ (m n : ℕ) → Total m n -- introducing with clause
-≤-total zero n = forward z≤n --toggle implicit argyments C-x C-h
-≤-total (suc m) zero = {!   !}
-≤-total (suc m) (suc n) = {!   !}
+≤-total zero n = forward z≤n
+≤-total (suc m) zero = flipped z≤n
+≤-total (suc m) (suc n) with ≤-total m n
+... | forward x = forward (s≤s x)
+... | flipped x = flipped (s≤s x)
+
 
 ≤-total′ : ∀ (m n : ℕ) → Total m n -- with helper function and where
-≤-total′ zero n = {!   !}
-≤-total′ (suc m) zero = {!   !}
-≤-total′ (suc m) (suc n) = {!   !}
+≤-total′ zero n = forward z≤n
+≤-total′ (suc m) zero = flipped z≤n
+≤-total′ (suc m) (suc n) = helper (≤-total m n)
+  where
+    helper : Total m n → Total (suc m) (suc n)
+    helper (forward x) = forward (s≤s x)
+    helper (flipped x) = flipped (s≤s x)
 
 -- Splitting on n first gives different code (see PLFA or try it yourself).
 
@@ -139,14 +143,15 @@ data Total′ : ℕ → ℕ → Set where
     -------------
   → m + p ≤ m + q
 
-+-monoʳ-≤ m p q p≤q = {!!}
++-monoʳ-≤ zero p q p≤q = p≤q
++-monoʳ-≤ (suc m) p q p≤q = s≤s (+-monoʳ-≤ m p q p≤q)
 
 +-monoˡ-≤ : ∀ (m n p : ℕ)
   → m ≤ n
     -------------
   → m + p ≤ n + p
 
-+-monoˡ-≤ m n p m≤n = {!!} -- use commutativity
++-monoˡ-≤ m n p m≤n rewrite +-comm m p | +-comm n p = +-monoʳ-≤ p m n m≤n
 
 +-mono-≤ : ∀ (m n p q : ℕ) -- combine above
   → m ≤ n
@@ -154,7 +159,7 @@ data Total′ : ℕ → ℕ → Set where
     -------------
   → m + p ≤ n + q
 
-+-mono-≤ m n p q m≤n p≤q = {!!}
++-mono-≤ m n p q m≤n p≤q = ≤-trans (+-monoʳ-≤ m p q p≤q ) (+-monoˡ-≤ m n q m≤n)
 
 -- PLFA exercise: show *-mono-≤.
 
@@ -177,8 +182,15 @@ data _<_ : ℕ → ℕ → Set where
 -- Prove that < is transitive.
 -- Order of arguments changed from PLFA, to match ≤-trans.
 
+{--
+Try case split variables and find case split two variable is much more easier to prove than case split only one variable.
+First hole has goal: zero < suc n, thus we fill "z<s"
+Second hole has goal:　suc m < suc n, which is the ouput is "s<s". Input s<s and refine, we have goal: m < n, and context: 
+n<p : n₁ < n, m<n : m < n₁. By induction, we should fill "<-trans m<n n<p".
+--}
 <-trans : ∀ {m n p : ℕ} → m < n → n < p → m < p
-<-trans m<n n<p = {!!}
+<-trans z<s (s<s n<p) = z<s
+<-trans (s<s m<n) (s<s n<p) = s<s ((<-trans m<n n<p))
 
 -- 747/PLFA exercise: Trichotomy (2 points)
 -- Prove that either m < n, m ≡ n, or m > n for all m and n.
@@ -189,7 +201,7 @@ data Trichotomy (m n : ℕ) : Set where
   is-> : n < m → Trichotomy m n
 
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
-<-trichotomy m n = {!!}
+<-trichotomy m n = {!  !}
 
 -- PLFA exercise: show +-mono-<.
 
@@ -260,9 +272,10 @@ o+e≡o : ∀ {m n : ℕ}
     -----------
   → odd (m + n)
 
-e+e≡e em en = {!!}
+e+e≡e zero en = en
+e+e≡e (suc x) en = suc (o+e≡o x en)
 
-o+e≡o om en = {!!}
+o+e≡o (suc x) en = suc (e+e≡e x en)
 
 -- 747/PLFA exercise: OPOE (2 points)
 -- Prove that the sum of two odds is even.

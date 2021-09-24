@@ -14,3 +14,17 @@ open import plfa.part1.Isomorphism using (_≃_; extensionality)
     ---
   → ⊥
 ¬-elim ¬x x = ¬x x
+
+infix 3 ¬_
+
+¬¬-intro : ∀ {A : Set}
+  → A
+    -----
+  → ¬ ¬ A
+¬¬-intro x  =  λ{¬x → ¬x x}
+
+¬¬-intro′ : ∀ {A : Set}
+  → A
+    -----
+  → ¬ ¬ A
+¬¬-intro′ x ¬x = ¬x x
