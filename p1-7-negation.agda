@@ -4,3 +4,13 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_)
 open import plfa.part1.Isomorphism using (_≃_; extensionality)
+
+¬_ : Set → Set
+¬ A = A → ⊥
+
+¬-elim : ∀ {A : Set}
+  → ¬ A
+  → A
+    ---
+  → ⊥
+¬-elim ¬x x = ¬x x
