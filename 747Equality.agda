@@ -16,7 +16,7 @@ sym : ∀ {A : Set} {x y : A}
     -----
   → y ≡ x
   
-sym x≡y = {!!}
+sym refl = refl
 
 trans : ∀ {A : Set} {x y z : A}
   → x ≡ y
@@ -24,7 +24,7 @@ trans : ∀ {A : Set} {x y z : A}
     -----
   → x ≡ z
 
-trans x≡y y≡z = {!!}
+trans refl y≡z = y≡z
 
 -- Congruence: applying a function to equal values yields equal values.
 
@@ -33,7 +33,7 @@ cong : ∀ {A B : Set} (f : A → B) {x y : A}
     ---------
   → f x ≡ f y
 
-cong f x≡y = {!!}
+cong f refl = refl
 
 -- Congruence with two arguments.
 
@@ -43,7 +43,19 @@ cong₂ : ∀ {A B C : Set} (f : A → B → C) {u x : A} {v y : B}
     -------------
   → f u v ≡ f x y
 
-cong₂ f u≡x v≡y = {!   !}
+cong₂ f {u} refl v≡y = cong (f u) v≡y
+{--
+f u v ≡ f u y
+----
+v≡y : v ≡ y
+y : B   (not in scope)
+v : B   (not in scope)
+u : A
+f : A → B → C
+C : Set   (not in scope)
+B : Set   (not in scope)
+A : Set   (not in scope)
+--}
 
 -- Applying two equal functions to a value yields equal values.
 
@@ -52,7 +64,7 @@ cong-app : ∀ {A B : Set} {f g : A → B}
     ---------------------
   → ∀ (x : A) → f x ≡ g x
 
-cong-app f≡g x = {!   !}
+cong-app refl x = refl
 
 -- Equal values have the same properties.
 
@@ -61,7 +73,7 @@ subst : ∀ {A : Set} {x y : A} (P : A → Set)
     ---------
   → P x → P y
 
-subst P x≡y px = {!   !}
+subst P refl px = px
 
 -- Here is how equational reasoning is set up.
 

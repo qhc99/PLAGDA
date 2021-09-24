@@ -199,9 +199,14 @@ data Trichotomy (m n : ℕ) : Set where
   is-< : m < n → Trichotomy m n
   is-≡ : m ≡ n → Trichotomy m n
   is-> : n < m → Trichotomy m n
-
+{--
+case split both m and n, 
+--}
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
-<-trichotomy m n = {!  !}
+<-trichotomy zero zero = is-≡ refl
+<-trichotomy zero (suc n) = {!   !}
+<-trichotomy (suc m) zero = {!   !}
+<-trichotomy (suc m) (suc n) = {!   !}
 
 -- PLFA exercise: show +-mono-<.
 
