@@ -61,14 +61,14 @@ proj₁ : ∀ {A B : Set}
     -----
   → A
 
-proj₁ A×B = {!!}
+proj₁ ⟨ x , x₁ ⟩ = x
 
 proj₂ : ∀ {A B : Set}
   → A × B
     -----
   → B
 
-proj₂ A×B = {!!}
+proj₂ ⟨ x , x₁ ⟩ = x₁
 
 -- An easier (equivalent) construction using records.
 
@@ -81,7 +81,7 @@ open _×′_
 -- Eta-equivalence relates constructors and destructors.
 
 η-× : ∀ {A B : Set} (w : A × B) → ⟨ proj₁ w , proj₂ w ⟩ ≡ w
-η-× A×B = {!!}
+η-× ⟨ x , x₁ ⟩ = refl
 
 -- Bool (Booleans), a type with exactly two members.
 
@@ -111,10 +111,16 @@ data Tri : Set where
 -- Cartesian product is commutative and associative up to isomorphism.
 
 ×-comm : ∀ {A B : Set} → A × B ≃ B × A
-×-comm = {!!}
+to ×-comm ⟨ x , x₁ ⟩ = ⟨ x₁ , x ⟩
+from ×-comm ⟨ x , x₁ ⟩ = ⟨ x₁ , x ⟩
+from∘to ×-comm ⟨ x , x₁ ⟩ = refl
+to∘from ×-comm ⟨ x , x₁ ⟩ = refl
 
 ×-assoc : ∀ {A B C : Set} → (A × B) × C ≃ A × (B × C)
-×-assoc = {!!}
+to ×-assoc ⟨ ⟨ x₁ , x₂ ⟩ , x ⟩ = ⟨ x₁ , ⟨ x₂ , x ⟩ ⟩
+from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = ⟨ ⟨ x , x₁ ⟩ , x₂ ⟩
+from∘to ×-assoc ⟨ ⟨ x₁ , x₂ ⟩ , x ⟩ = refl
+to∘from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = refl
 
 -- 747/PLFA exercise: IffIsoIfOnlyIf (1 point)
 -- Show A ⇔ B is isomorphic to (A → B) × (B → A).
@@ -130,19 +136,19 @@ data ⊤ : Set where
     --
     ⊤
 
-η-⊤ : ∀ (w : ⊤) → tt ≡ w
-η-⊤ w = {!!}
+-- η-⊤ : ∀ (w : ⊤) → tt ≡ w
+-- η-⊤ w = {!!}
 
 ⊤-count : ⊤ → ℕ
 ⊤-count tt = 1
 
 -- Unit is the left and right identity of product.
 
-⊤-identityˡ : ∀ {A : Set} → ⊤ × A ≃ A
-⊤-identityˡ = {!!}
+-- ⊤-identityˡ : ∀ {A : Set} → ⊤ × A ≃ A
+-- ⊤-identityˡ = {!!}
 
-⊤-identityʳ : ∀ {A : Set} → (A × ⊤) ≃ A
-⊤-identityʳ = {!!}
+-- ⊤-identityʳ : ∀ {A : Set} → (A × ⊤) ≃ A
+-- ⊤-identityʳ = {!!}
 
 -- Logical OR (disjunction) is sum (disjoint union).
 
@@ -166,20 +172,23 @@ case-⊎ : ∀ {A B C : Set}
   → A ⊎ B
     -----------
   → C
-case-⊎ f g s = {!!}
+case-⊎ f g (inj₁ x) = f x
+case-⊎ f g (inj₂ x) = g x
 
 -- We typically use pattern-matching to eliminate sums.
 
 -- Eta equivalence for sums.
 
 η-⊎ : ∀ {A B : Set} (w : A ⊎ B) → case-⊎ inj₁ inj₂ w ≡ w
-η-⊎ w = {!!}
+η-⊎ (inj₁ x) = refl
+η-⊎ (inj₂ x) = refl
 
 -- A generalization.
 
 uniq-⊎ : ∀ {A B C : Set} (h : A ⊎ B → C) (w : A ⊎ B) →
   case-⊎ (h ∘ inj₁) (h ∘ inj₂) w ≡ h w
-uniq-⊎ h w = {!!}
+uniq-⊎ h (inj₁ x) = refl
+uniq-⊎ h (inj₂ x) = refl
 
 infix 1 _⊎_
 
@@ -216,13 +225,13 @@ data ⊥ : Set where
     --
   → A
 
-⊥-elim w = {!!}
+⊥-elim ()
 
 uniq-⊥ : ∀ {C : Set} (h : ⊥ → C) (w : ⊥) → ⊥-elim w ≡ h w
-uniq-⊥ h w = {!!}
+uniq-⊥ h ()
 
 ⊥-count : ⊥ → ℕ
-⊥-count w = {!!}
+⊥-count ()
 
 -- 747/PLFA exercise: EmptyLeftIdSumIso (1 point)
 -- Empty is the left unit of sum up to isomorphism.
@@ -274,27 +283,50 @@ uniq-⊥ h w = {!!}
 -- this is called "currying".
 
 currying : ∀ {A B C : Set} → (A → B → C) ≃ (A × B → C)
-currying = {!!}
+to currying f ⟨ a , b ⟩ = f a b
+from currying f a b = f ⟨ a , b ⟩
+from∘to currying x = refl
+to∘from currying y = extensionality (λ { ⟨ a , b ⟩ → refl})
 
 -- In math,   p ^ (n + m) = (p ^ n) * (p ^ m).
 -- For types, (A ⊎ B → C) ≃ ((A → C) × (B → C)).
 
 →-distrib-⊎ : ∀ {A B C : Set} → (A ⊎ B → C) ≃ ((A → C) × (B → C))
-→-distrib-⊎ = {!!}
+to →-distrib-⊎ x = ⟨ (λ x₁ → x (inj₁ x₁)) , (λ x₁ → x (inj₂ x₁)) ⟩
+from →-distrib-⊎ ⟨ x , x₁ ⟩ (inj₁ x₂) = x x₂
+from →-distrib-⊎ ⟨ x , x₁ ⟩ (inj₂ x₂) = x₁ x₂
+from∘to →-distrib-⊎ x = extensionality λ { (inj₁ x) → refl ; (inj₂ x) → refl }
+to∘from →-distrib-⊎ ⟨ x , x₁ ⟩ = refl
 
 -- In math,   (p * n) ^ m = (p ^ m) * (n ^ m).
 -- For types, (A → B × C) ≃ (A → B) × (A → C).
 
 →-distrib-× : ∀ {A B C : Set} → (A → B × C) ≃ (A → B) × (A → C)
-→-distrib-× = {!!}
+to →-distrib-× x = ⟨ (λ x₁ → proj₁ (x x₁)) , (λ x₁ → proj₂ (x x₁)) ⟩
+from →-distrib-× ⟨ x , x₁ ⟩ = λ x₂ → ⟨ (x x₂) , (x₁ x₂) ⟩
+from∘to →-distrib-× f = extensionality λ x → η-× (f x)
+to∘from →-distrib-× ⟨ x , x₁ ⟩ = refl
 
 -- More distributive laws.
 
 ×-distrib-⊎ : ∀ {A B C : Set} → (A ⊎ B) × C ≃ (A × C) ⊎ (B × C)
-×-distrib-⊎ = {!!}
+to ×-distrib-⊎ ⟨ inj₁ x , x₁ ⟩ = inj₁ ⟨ x , x₁ ⟩
+to ×-distrib-⊎ ⟨ inj₂ x , x₁ ⟩ = inj₂ ⟨ x , x₁ ⟩
+from ×-distrib-⊎ (inj₁ ⟨ x , x₁ ⟩) = ⟨ (inj₁ x) , x₁ ⟩
+from ×-distrib-⊎ (inj₂ ⟨ x , x₁ ⟩) = ⟨ (inj₂ x) , x₁ ⟩
+from∘to ×-distrib-⊎ ⟨ inj₁ x , x₁ ⟩ = refl
+from∘to ×-distrib-⊎ ⟨ inj₂ x , x₁ ⟩ = refl
+to∘from ×-distrib-⊎ (inj₁ ⟨ x , x₁ ⟩) = refl
+to∘from ×-distrib-⊎ (inj₂ ⟨ x , x₁ ⟩) = refl
 
 ⊎-distrib-× : ∀ {A B C : Set} → (A × B) ⊎ C ≲ (A ⊎ C) × (B ⊎ C)
-⊎-distrib-× = {!!}
+_≲_.to ⊎-distrib-× (inj₁ ⟨ x , x₁ ⟩) = ⟨ (inj₁ x) , (inj₁ x₁) ⟩
+_≲_.to ⊎-distrib-× (inj₂ x) = ⟨ (inj₂ x) , (inj₂ x) ⟩
+_≲_.from ⊎-distrib-× ⟨ inj₁ x , inj₁ x₁ ⟩ = inj₁ ⟨ x , x₁ ⟩
+_≲_.from ⊎-distrib-× ⟨ inj₁ x , inj₂ x₁ ⟩ = inj₂ x₁
+_≲_.from ⊎-distrib-× ⟨ inj₂ x , x₁ ⟩ = inj₂ x
+_≲_.from∘to ⊎-distrib-× (inj₁ ⟨ x , x₁ ⟩) = refl 
+_≲_.from∘to ⊎-distrib-× (inj₂ x) = refl
 
 -- Think of a counterexample to show the above isn't an isomorphism.
 

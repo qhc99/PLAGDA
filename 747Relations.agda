@@ -395,13 +395,20 @@ o+e≡o (suc x) en = suc (e+e≡e x en)
 -- Hint: You will need to define another theorem and prove both
 --       by mutual induction, as with the theorems above.         
 
+e+o≡o : ∀ {m n : ℕ}
+  → even m
+  → odd n
+    -----------
+  → odd (m + n)
+e+o≡o {m} {n} em on rewrite +-comm m n  = o+e≡o on em
+
 o+o≡e : ∀ {m n : ℕ}
   → odd m
   → odd n
   --------------
   → even (m + n)
 
-o+o≡e om on = {!!}
+o+o≡e (suc x) (suc x₁) = {!   !}
 
 
 -- For remarks on which of these definitions are in the standard library, see PLFA.
