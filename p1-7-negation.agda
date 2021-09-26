@@ -28,3 +28,30 @@ infix 3 ¬_
     -----
   → ¬ ¬ A
 ¬¬-intro′ x ¬x = ¬x x
+
+¬¬¬-elim : ∀ {A : Set}
+  → ¬ ¬ ¬ A
+    -------
+  → ¬ A
+¬¬¬-elim ¬¬¬x  =  λ x → ¬¬¬x (¬¬-intro x)
+
+contraposition : ∀ {A B : Set}
+  → (A → B)
+    -----------
+  → (¬ B → ¬ A)
+contraposition f ¬y x = ¬y (f x)
+
+_≢_ : ∀ {A : Set} → A → A → Set
+x ≢ y  =  ¬ (x ≡ y)
+
+_ : 1 ≢ 2
+_ = λ()
+
+peano : ∀ {m : ℕ} → zero ≢ suc m
+peano = λ ()
+
+postulate
+  em : ∀ {A : Set} → A ⊎ ¬ A
+
+em-irrefutable : ∀ {A : Set} → ¬ ¬ (A ⊎ ¬ A)
+em-irrefutable = λ k → k (inj₂ (λ x → k (inj₁ x)))

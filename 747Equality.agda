@@ -43,19 +43,7 @@ cong₂ : ∀ {A B C : Set} (f : A → B → C) {u x : A} {v y : B}
     -------------
   → f u v ≡ f x y
 
-cong₂ f {u} refl v≡y = cong (f u) v≡y
-{--
-f u v ≡ f u y
-----
-v≡y : v ≡ y
-y : B   (not in scope)
-v : B   (not in scope)
-u : A
-f : A → B → C
-C : Set   (not in scope)
-B : Set   (not in scope)
-A : Set   (not in scope)
---}
+cong₂ f refl refl = refl
 
 -- Applying two equal functions to a value yields equal values.
 
@@ -200,7 +188,7 @@ even-comm : ∀ (m n : ℕ)
     ------------
   → even (n + m)
 
-even-comm m n ev = {!   !}
+even-comm m n ev rewrite +-comm m n = ev
 
 -- PLFA shows how to prove +-comm using rewrites (which we already did).
 
@@ -216,7 +204,7 @@ even-comm′ : ∀ (m n : ℕ)
 -- Then we split on the proof.
 
 even-comm′ m n ev with   m + n  | +-comm m n
-... | r1 | r2       = {!   !}
+...                  | .(n + m) | refl = ev
 
 -- In this case, rewrite is not necessary.
 

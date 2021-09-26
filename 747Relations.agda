@@ -162,6 +162,48 @@ data Total′ : ℕ → ℕ → Set where
 +-mono-≤ m n p q m≤n p≤q = ≤-trans (+-monoʳ-≤ m p q p≤q ) (+-monoˡ-≤ m n q m≤n)
 
 -- PLFA exercise: show *-mono-≤.
+{--
+copy the structrue of +-mono-≤, set holes.
+--}
+open import Data.Nat using (_*_)
+open import Data.Nat.Properties using (*-comm)
+
+*-monoʳ-≤ : ∀ (m p q : ℕ)
+  → p ≤ q
+    -------------
+  → m * p ≤ m * q
+
+*-monoʳ-≤ zero p q p≤q = z≤n -- goal: zero ≤ zero, so fill z≤n here
+*-monoʳ-≤ (suc m) p q p≤q = +-mono-≤ p q (m * p) (m * q) p≤q (*-monoʳ-≤ m p q p≤q) 
+{--
+Above goal: p + m * p ≤ q + m * q
+The context: p ≤ q and, by induction, (m * q) ≤ (m * q).
+We have rule: +-mono-≤ : ∀ (m n p q : ℕ) → m ≤ n → p ≤ q → m + p ≤ n + q, then 
+we can get "p + m * p ≤ q + m * q", which is the goal.
+--}
+
+{--
+Below I just copied the proof of +-monoˡ-≤ and change "+" to "*" everywhere, then prove successed surprisingly!
+Do not forget to import "_*_" and "*-comm" accordingly.
+--}
+*-monoˡ-≤ : ∀ (m n p : ℕ)
+  → m ≤ n
+    -------------
+  → m * p ≤ n * p
+
+*-monoˡ-≤ m n p m≤n rewrite *-comm m p | *-comm n p = *-monoʳ-≤ p m n m≤n
+
+{--
+Same as the prove of *-monoˡ-≤, just copy and change "+" to "*".
+Since monotonicity of ≤ has its own prove structrue, we can just change a few lines of code to adapt +-mono-≤ to *-mono-≤.
+--}
+*-mono-≤ : ∀ (m n p q : ℕ) -- combine above
+  → m ≤ n
+  → p ≤ q
+    -------------
+  → m * p ≤ n * q
+
+*-mono-≤ m n p q m≤n p≤q = ≤-trans (*-monoʳ-≤ m p q p≤q ) (*-monoˡ-≤ m n q m≤n)
 
 -- Strict inequality.
 
@@ -200,20 +242,71 @@ data Trichotomy (m n : ℕ) : Set where
   is-≡ : m ≡ n → Trichotomy m n
   is-> : n < m → Trichotomy m n
 {--
-case split both m and n, 
+Case split both m and n, since we need knowledge both m and n.
+First hole has goal: Trichotomy zero zero, so we should apply ≡ rule, input "is-≡" and refine, get goal: zero ≡ zero, which 
+is refl, then the answer is "is-≡ refl" here.
+Second hole after refine "is-<", we get goal: zero < suc n, which is constructor "z<s", refine input, then answer is "is-< z<s".
+Thrid hole after refine "is->", we get goal: zero < suc m, which is same as the above case.
+Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by induction, which needs a helper function.
+
 --}
+
+m≡n→suc-m≡suc-n : ∀ {m n : ℕ} → m ≡ n → suc m ≡ suc n
+m≡n→suc-m≡suc-n refl = refl
+
+suc-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
+suc-trichotomy (is-< x) = is-< (s<s x)
+suc-trichotomy (is-≡ x) = is-≡ (m≡n→suc-m≡suc-n x)
+suc-trichotomy (is-> x) = is-> (s<s x)
+
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
-<-trichotomy zero zero = is-≡ refl
-<-trichotomy zero (suc n) = {!   !}
-<-trichotomy (suc m) zero = {!   !}
-<-trichotomy (suc m) (suc n) = {!   !}
+<-trichotomy zero zero = is-≡ refl 
+<-trichotomy zero (suc n) = is-< z<s
+<-trichotomy (suc m) zero = is-> z<s
+<-trichotomy (suc m) (suc n) = suc-trichotomy (<-trichotomy m n)
 
 -- PLFA exercise: show +-mono-<.
+
++-monoʳ-< : ∀ (n p q : ℕ)
+  → p < q
+    -------------
+  → n + p < n + q
++-monoʳ-< zero    p q p<q  =  p<q
++-monoʳ-< (suc n) p q p<q  =  s<s (+-monoʳ-< n p q p<q)
+
++-monoˡ-< : ∀ (m n p : ℕ)
+  → m < n
+    -------------
+  → m + p < n + p
++-monoˡ-< m n p m<n  rewrite +-comm m p | +-comm n p  = +-monoʳ-< p m n m<n
+
++-mono-< : ∀ (m n p q : ℕ)
+  → m < n
+  → p < q
+    -------------
+  → m + p < n + q
++-mono-< m n p q m<n p<q = <-trans (+-monoˡ-< m n p m<n) (+-monoʳ-< n p q p<q)
 
 -- Prove that suc m ≤ n implies m < n, and conversely,
 -- and do the same for (m ≤ n) and (m < suc n).
 -- Hint: if you do the proofs in the order below, you can avoid induction
 -- for two of the four proofs.
+
+{--
+Case split only variable of suc-m≤n→m≤n, find its goal is exactly m≤n→m<suc-n, so we declare before prove it.
+--}
+
+m≤n→m<suc-n : ∀ {m n : ℕ} → m ≤ n → m < suc n
+
+suc-m≤n→m≤n : ∀{m n : ℕ} → suc m ≤ n → m < n
+suc-m≤n→m≤n (s≤s sm≤n) = m≤n→m<suc-n sm≤n
+
+--m ≤ n → m < suc n
+m≤n→m<suc-n z≤n = z<s -- Goal: zero < suc n, which is constructor "z<s"
+m≤n→m<suc-n (s≤s m≤n) = s<s (m≤n→m<suc-n m≤n)  
+-- Goal: suc m < suc (suc n), we can get "m < suc n" from "m ≤ n" and m≤n→m<suc-n by induction, 
+-- then by constructor s<s we get "suc m < suc (suc n)".
+
 
 -- 747/PLFA exercise: LEtoLTS (1 point)
 
