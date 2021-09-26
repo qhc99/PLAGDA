@@ -248,22 +248,21 @@ is refl, then the answer is "is-≡ refl" here.
 Second hole after refine "is-<", we get goal: zero < suc n, which is constructor "z<s", refine input, then answer is "is-< z<s".
 Thrid hole after refine "is->", we get goal: zero < suc m, which is same as the above case.
 Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by induction, which needs a helper function.
-
 --}
 
 m≡n→suc-m≡suc-n : ∀ {m n : ℕ} → m ≡ n → suc m ≡ suc n
 m≡n→suc-m≡suc-n refl = refl
 
-suc-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
-suc-trichotomy (is-< x) = is-< (s<s x)
-suc-trichotomy (is-≡ x) = is-≡ (m≡n→suc-m≡suc-n x)
-suc-trichotomy (is-> x) = is-> (s<s x)
+suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
+suc-<-trichotomy (is-< x) = is-< (s<s x)
+suc-<-trichotomy (is-≡ x) = is-≡ (m≡n→suc-m≡suc-n x)
+suc-<-trichotomy (is-> x) = is-> (s<s x)
 
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
 <-trichotomy zero zero = is-≡ refl 
 <-trichotomy zero (suc n) = is-< z<s
 <-trichotomy (suc m) zero = is-> z<s
-<-trichotomy (suc m) (suc n) = suc-trichotomy (<-trichotomy m n)
+<-trichotomy (suc m) (suc n) = suc-<-trichotomy (<-trichotomy m n)
 
 -- PLFA exercise: show +-mono-<.
 
