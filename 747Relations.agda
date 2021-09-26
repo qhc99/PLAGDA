@@ -253,6 +253,11 @@ Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by inducti
 m≡n→suc-m≡suc-n : ∀ {m n : ℕ} → m ≡ n → suc m ≡ suc n
 m≡n→suc-m≡suc-n refl = refl
 
+{--
+For Trichotomy m n, we have three cases.
+In the first case, we have m < n in context, by constructor "s<s" we can get suc m < suc n, which is similar to the thrid case.
+In the second cases, we need the rule m ≡ n → suc m ≡ suc n, so we set the other helper function above, which is quite easy to prove.
+--}
 suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
 suc-<-trichotomy (is-< x) = is-< (s<s x)
 suc-<-trichotomy (is-≡ x) = is-≡ (m≡n→suc-m≡suc-n x)
@@ -265,7 +270,10 @@ suc-<-trichotomy (is-> x) = is-> (s<s x)
 <-trichotomy (suc m) (suc n) = suc-<-trichotomy (<-trichotomy m n)
 
 -- PLFA exercise: show +-mono-<.
-
+{--
+Since +-mono-< and +-mono-≤ have same prove structrue, we copy the code of +-mono-≤ and change 
+"≤" to "<" everywhere. Then solve conflicts rised by compiler, which do not exist in this case.
+--}
 +-monoʳ-< : ∀ (n p q : ℕ)
   → p < q
     -------------
@@ -291,44 +299,52 @@ suc-<-trichotomy (is-> x) = is-> (s<s x)
 -- Hint: if you do the proofs in the order below, you can avoid induction
 -- for two of the four proofs.
 
-{--
-Case split only variable of suc-m≤n→m≤n, find its goal is exactly m≤n→m<suc-n, so we declare before prove it.
---}
-
-m≤n→m<suc-n : ∀ {m n : ℕ} → m ≤ n → m < suc n
-
-suc-m≤n→m≤n : ∀{m n : ℕ} → suc m ≤ n → m < n
-suc-m≤n→m≤n (s≤s sm≤n) = m≤n→m<suc-n sm≤n
-
---m ≤ n → m < suc n
-m≤n→m<suc-n z≤n = z<s -- Goal: zero < suc n, which is constructor "z<s"
-m≤n→m<suc-n (s≤s m≤n) = s<s (m≤n→m<suc-n m≤n)  
--- Goal: suc m < suc (suc n), we can get "m < suc n" from "m ≤ n" and m≤n→m<suc-n by induction, 
--- then by constructor s<s we get "suc m < suc (suc n)".
-
 
 -- 747/PLFA exercise: LEtoLTS (1 point)
 
 ≤-<-to : ∀ {m n : ℕ} → m ≤ n → m < suc n
-≤-<-to m≤n = {!!}
+≤-<-to z≤n = z<s --Goal: zero < suc n
+≤-<-to (s≤s m≤n) = s<s (≤-<-to m≤n)
+-- Goal: suc m < suc (suc n), we can get "m < suc n" from "m ≤ n" and "≤-<-to" by induction, 
+-- then by constructor "s<s" we get "suc m < suc (suc n)".
 
 -- 747/PLFA exercise: LEStoLT (1 point)
 
 ≤-<--to′ : ∀ {m n : ℕ} → suc m ≤ n → m < n
-≤-<--to′ sm≤n = {!!}
+≤-<--to′ (s≤s sm≤n) = ≤-<-to sm≤n --Goal: m < suc n, context: sm≤n : m ≤ n, and we have "≤-<-to : ∀ {m n : ℕ} → m ≤ n → m < suc n"
 
 -- 747/PLFA exercise: LTtoSLE (1 point)
-
+{--
+First goal: 1 ≤ suc n. It is actually solved by C-c C-a. 
+We have "zero ≤ n" by "z≤n", by "s≤s" it is transformed into suc zero ≤ suc n, which is "1 ≤ suc n".
+Second goal: suc (suc m) ≤ suc n, It is again solved by C-c C-a.
+By induction we have suc m ≤ n from m < n, then by constructor "s≤s" we get suc (suc m) ≤ suc n 
+--}
 ≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n
-≤-<-from m<n = {!!}
+≤-<-from z<s = s≤s z≤n 
+≤-<-from (s<s m<n)  = s≤s (≤-<-from m<n)
 
 -- 747/PLFA exercise: LTStoLE (1 point)
 
 ≤-<-from′ : ∀ {m n : ℕ} → m < suc n → m ≤ n
-≤-<-from′ m<sn = {!!}
+≤-<-from′ z<s = z≤n
+≤-<-from′ (s<s m<sn) = ≤-<-from m<sn
 
 -- PLFA exercise: use the above to give a proof of <-trans that uses ≤-trans.
+{--
+By "≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n", we have two rules below:
+m < n → suc m ≤ n,
+n < p → suc n ≤ p.
+By ≤-trans we have "suc m ≤ suc n" with a helper function "n ≤ suc n".
+Then by ≤-trans again we have "suc m ≤ p" from the fact that "suc m ≤ suc n ≤ p".
+Finally, by "≤-<--to′ : ∀ {m n : ℕ} → suc m ≤ n → m < n", we get the goal "m < p"
+--}
+n≤suc-n : ∀ {n : ℕ} → n ≤ suc n
+n≤suc-n {zero} = z≤n
+n≤suc-n {suc n} = s≤s n≤suc-n
 
+<-trans-≤-trans : ∀ {m n p : ℕ} → m < n → n < p → m < p
+<-trans-≤-trans m<n n<p = ≤-<--to′ (≤-trans (≤-trans (≤-<-from m<n) n≤suc-n) (≤-<-from n<p))
 -- Mutually recursive datatypes.
 -- Specify the types first, then give the definitions.
 
