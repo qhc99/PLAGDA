@@ -395,21 +395,25 @@ o+e≡o (suc x) en = suc (e+e≡e x en)
 -- Hint: You will need to define another theorem and prove both
 --       by mutual induction, as with the theorems above.         
 
-e+o≡o : ∀ {m n : ℕ}
-  → even m
-  → odd n
-    -----------
-  → odd (m + n)
-e+o≡o {m} {n} em on rewrite +-comm m n  = o+e≡o on em
-
+{--
+Case split both om and on, we lost the implicit arguments.
+So we try spliting one of implicit arguments and its corresponding variable, which are "m" and "om".
+--}
 o+o≡e : ∀ {m n : ℕ}
   → odd m
   → odd n
   --------------
   → even (m + n)
 
-o+o≡e (suc x) (suc x₁) = {!   !}
-
+o+o≡e {zero} {n} () on -- The first rule is impossible after case split
+o+o≡e {suc m} {n} (suc x) on rewrite +-comm m n = suc (o+e≡o on x) --Goal: even (suc (m + n))
+{--
+We have context: on: odd n, x: even m.
+From goal, we infer that: suc ?: even (suc (m + n)), ?: odd (m + n)
+To fill the hole above, we need the rule: o+e≡o on x: odd (n + m)
+Then we can get "suc (o+e≡o on x): even (suc (n + m))"
+After rewrite "+-comm m n", we finally get the goal. 
+--}
 
 -- For remarks on which of these definitions are in the standard library, see PLFA.
 
