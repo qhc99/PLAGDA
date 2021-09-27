@@ -163,7 +163,7 @@ data Total′ : ℕ → ℕ → Set where
 
 -- PLFA exercise: show *-mono-≤.
 {--
-copy the structrue of +-mono-≤, set holes.
+copy the structrue of +-mono-≤ and set holes.
 --}
 open import Data.Nat using (_*_)
 open import Data.Nat.Properties using (*-comm)
@@ -177,7 +177,7 @@ open import Data.Nat.Properties using (*-comm)
 *-monoʳ-≤ (suc m) p q p≤q = +-mono-≤ p q (m * p) (m * q) p≤q (*-monoʳ-≤ m p q p≤q) 
 {--
 Above goal: p + m * p ≤ q + m * q
-The context: p ≤ q and, by induction, (m * q) ≤ (m * q).
+The context: p ≤ q and, by induction we have (m * q) ≤ (m * q).
 We have rule: +-mono-≤ : ∀ (m n p q : ℕ) → m ≤ n → p ≤ q → m + p ≤ n + q, then 
 we can get "p + m * p ≤ q + m * q", which is the goal.
 --}
