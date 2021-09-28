@@ -293,23 +293,35 @@ open _⇔_ -- added
     -----
   → A ⇔ A
 
-to ⇔-refl =  λ x → x -- refine accidentally, we have λ x → {!   !}, context  x: A, and goal A, obviously we should fill x in the hole.
-from ⇔-refl = λ x → x -- same as above case
+to ⇔-refl x = x -- no context, so we case split on null. Then we have goal: A, context  x: A, obviously we should fill x in the hole.
+from ⇔-refl x = x -- same as above case
 
 ⇔-sym : ∀ {A B : Set}
   → A ⇔ B
     -----
   → B ⇔ A
-
-⇔-sym A⇔B = {!!}
+-- Case split on null, we got two cases. This case has goal: "B → A", which is output of "from", 
+-- and context: A⇔B : A ⇔ B, then answer is obvious since we know "to" and "from" are functions which input is A ⇔ B and output is corresponding signature.
+to (⇔-sym A⇔B) = from A⇔B 
+-- The second case has similar idea above.
+from (⇔-sym A⇔B) = to A⇔B
 
 ⇔-trans : ∀ {A B C : Set}
   → A ⇔ B
   → B ⇔ C
     -----
   → A ⇔ C
-
-⇔-trans A⇔B B⇔C = {!!}
+{--
+Still we case split on null since we do not want induction, because it dose not work in this case.
+The First hole has goal: A → C, which is a function type.
+We split on null again to extract variable x since I do not prefer lambda function.
+Then the goal now is C
+Since we have context B⇔C : B ⇔ C, A⇔B : A ⇔ B, we can get type B → C and A → B by "to", 
+Then link these two function types, we get function type A → C, then we input A to convert it to C, which is the goal. 
+--}
+to (⇔-trans A⇔B B⇔C) x = ((to B⇔C) ((to A⇔B) x)) 
+-- The second case has similar idea.
+from (⇔-trans A⇔B B⇔C) x = ((from A⇔B) ((from B⇔C) x))
 
 -- 747/PLFA extended exercise: Canonical bitstrings.
 -- Modified and extended from Bin-predicates exercise in PLFA Relations.
@@ -331,16 +343,23 @@ dbl (suc n) = suc (suc (dbl n))
 -- You may also copy over any theorems that prove useful.
 
 inc : Bin-ℕ → Bin-ℕ
-inc n = {!!}
+inc bits = bits x1 
+inc (other x0) = (other x1) 
+inc (other x1) = ((inc other) x0) 
 
 tob : ℕ → Bin-ℕ
-tob n = {!!}
+tob zero =  bits 
+tob (suc m) =  inc (tob m) 
 
 dblb : Bin-ℕ → Bin-ℕ
-dblb n = {!!}
+dblb bits = bits
+dblb (m x0) = m x0 x0
+dblb (m x1) = m x1 x0
 
 fromb : Bin-ℕ → ℕ
-fromb n = {!!}
+fromb bits = zero
+fromb (n x0) = dbl (fromb n)  
+fromb (n x1) = suc (dbl (fromb n))
 
 -- The reason that we couldn't prove ∀ {n : Bin-ℕ} → tob (fromb n) ≡ n
 -- is because of the possibility of leading zeroes in a Bin-ℕ value.
