@@ -25,13 +25,18 @@ postulate
 -- Another definition of addition.
 
 _+′_ : ℕ → ℕ → ℕ -- split on n instead, get different code
-m +′ n = {!!}
+m +′ zero  = m
+m +′ suc n = suc (m +′ n)
 
 same-app : ∀ (m n : ℕ) → m +′ n ≡ m + n
-same-app m n = {!!}
+same-app m n rewrite +-comm m n = helper m n
+  where
+  helper : ∀ (m n : ℕ) → m +′ n ≡ n + m
+  helper m zero    = refl
+  helper m (suc n) = cong suc (helper m n)
 
 same : _+′_ ≡ _+_  -- this requires extensionality
-same = {!!}
+same = extensionality (λ m → extensionality (λ n → same-app m n))
 
 -- Isomorphism.
 
@@ -82,7 +87,13 @@ to∘from′ (mk-≃′ f g g∘f f∘g) = f∘g
 
 -- in empty hole, split on result, get copatterns (not in PLFA)
 
-≃-refl = {!!}
+≃-refl = 
+ record
+    { to      = λ{x → x}
+    ; from    = λ{y → y}
+    ; from∘to = λ{x → refl}
+    ; to∘from = λ{y → refl}
+    }
 
 -- Symmetry.
 
@@ -91,7 +102,13 @@ to∘from′ (mk-≃′ f g g∘f f∘g) = f∘g
     -----
   → B ≃ A
 
-≃-sym A≃B = {!!}
+≃-sym A≃B = 
+  record
+    { to      = from A≃B
+    ; from    = to   A≃B
+    ; from∘to = to∘from A≃B
+    ; to∘from = from∘to A≃B
+    }
 
 -- Transitivity.
 
@@ -101,7 +118,31 @@ to∘from′ (mk-≃′ f g g∘f f∘g) = f∘g
     -----
   → A ≃ C
 
-≃-trans A≃B B≃C = {!!}
+≃-trans A≃B B≃C = 
+  record
+    { to       = to   B≃C ∘ to   A≃B
+    ; from     = from A≃B ∘ from B≃C
+    ; from∘to  = λ{x →
+        begin
+          (from A≃B ∘ from B≃C) ((to B≃C ∘ to A≃B) x)
+        ≡⟨⟩
+          from A≃B (from B≃C (to B≃C (to A≃B x)))
+        ≡⟨ cong (from A≃B) (from∘to B≃C (to A≃B x)) ⟩
+          from A≃B (to A≃B x)
+        ≡⟨ from∘to A≃B x ⟩
+          x
+        ∎}
+    ; to∘from = λ{y →
+        begin
+          (to B≃C ∘ to A≃B) ((from A≃B ∘ from B≃C) y)
+        ≡⟨⟩
+          to B≃C (to A≃B (from A≃B (from B≃C y)))
+        ≡⟨ cong (to B≃C) (to∘from A≃B (from B≃C y)) ⟩
+          to B≃C (from B≃C y)
+        ≡⟨ to∘from B≃C y ⟩
+          y
+        ∎}
+     }
 
 -- Isomorphism is an equivalence relation.
 -- We can create syntax for equational reasoning.
@@ -143,10 +184,27 @@ record _≲_ (A B : Set) : Set where
 open _≲_
 
 ≲-refl : ∀ {A : Set} → A ≲ A
-≲-refl = {!!}
+≲-refl = 
+    record
+    { to      = λ{x → x}
+    ; from    = λ{y → y}
+    ; from∘to = λ{x → refl}
+    }
 
 ≲-trans : ∀ {A B C : Set} → A ≲ B → B ≲ C → A ≲ C
-≲-trans A≲B B≲C = {!!}
+≲-trans A≲B B≲C = 
+  record
+    { to      = λ{x → to   B≲C (to   A≲B x)}
+    ; from    = λ{y → from A≲B (from B≲C y)}
+    ; from∘to = λ{x →
+        begin
+          from A≲B (from B≲C (to B≲C (to A≲B x)))
+        ≡⟨ cong (from A≲B) (from∘to B≲C (to A≲B x)) ⟩
+          from A≲B (to A≲B x)
+        ≡⟨ from∘to A≲B x ⟩
+          x
+        ∎}
+     }
 
 ≲-antisym : ∀ {A B : Set}
   → (A≲B : A ≲ B)
@@ -156,7 +214,22 @@ open _≲_
     -------------------
   → A ≃ B
 
-≲-antisym A≲B B≲A to≡from from≡to = {!!}
+≲-antisym A≲B B≲A to≡from from≡to = 
+  record
+    { to      = to A≲B
+    ; from    = from A≲B
+    ; from∘to = from∘to A≲B
+    ; to∘from = λ{y →
+        begin
+          to A≲B (from A≲B y)
+        ≡⟨ cong (to A≲B) (cong-app from≡to y) ⟩
+          to A≲B (to B≲A y)
+        ≡⟨ cong-app to≡from (to B≲A y) ⟩
+          from B≲A (to B≲A y)
+        ≡⟨ from∘to B≲A y ⟩
+          y
+        ∎}
+    }
 
 -- Tabular reasoning for embedding.
 
@@ -187,13 +260,24 @@ module ≲-Reasoning where
 open ≲-Reasoning
 
 -- PLFA exercise: Isomorphism implies embedding.
-
+{--
+Just case split (on null variable), we get three cases.
+Frist hole: Split null again, we got implicit variable x: A, and goal: B, context: a≃b : A ≃ B
+See equivalence of "to": to′ : ∀ {A B : Set} → (A ≃′ B) → (A → B), we can infer that "to" transforms "A ≃ B" into a function, 
+which can transform "A" into "B", so "(to a≃b)" is a function: A → B, and then we apply "x" to the function, finally we get "B".
+Second hole: similar idea as the above case.
+Third hole: goal: from a≃b (to a≃b x) ≡ x, context dost not change. From the goal and signature of from∘to : ∀ (x : A) → from (to x) ≡ x,
+we can infer that we must utilize "from∘to". We guess that third case maybe has similar prove structure of first two cases,
+so we tried "(from∘to a≃b) x" and find it actually works!
+--}
 ≃-implies-≲ : ∀ {A B : Set}
   → A ≃ B
     -----
   → A ≲ B  
 
-≃-implies-≲ a≃b = {!!}
+to (≃-implies-≲ a≃b) x = (to a≃b) x
+from (≃-implies-≲ a≃b) x = (from a≃b) x
+from∘to (≃-implies-≲ a≃b) x = (from∘to a≃b) x
 
 -- PLFA exercise: propositional equivalence (weaker than embedding).
 
@@ -209,7 +293,8 @@ open _⇔_ -- added
     -----
   → A ⇔ A
 
-⇔-refl = {!!}
+to ⇔-refl =  λ x → x -- refine accidentally, we have λ x → {!   !}, context  x: A, and goal A, obviously we should fill x in the hole.
+from ⇔-refl = λ x → x -- same as above case
 
 ⇔-sym : ∀ {A B : Set}
   → A ⇔ B
