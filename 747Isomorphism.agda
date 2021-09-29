@@ -265,7 +265,7 @@ Just case split (on null variable), we get three cases.
 Frist hole: Split null again, we got implicit variable x: A, and goal: B, context: a≃b : A ≃ B
 See equivalence of "to": to′ : ∀ {A B : Set} → (A ≃′ B) → (A → B), we can infer that "to" transforms "A ≃ B" into a function, 
 which can transform "A" into "B", so "(to a≃b)" is a function: A → B, and then we apply "x" to the function, finally we get "B".
-Second hole: similar idea as the above case.
+Second hole: similar idea as the first case.
 Third hole: goal: from a≃b (to a≃b x) ≡ x, context dost not change. From the goal and signature of from∘to : ∀ (x : A) → from (to x) ≡ x,
 we can infer that we must utilize "from∘to". We guess that third case maybe has similar prove structure of first two cases,
 so we tried "(from∘to a≃b) x" and find it actually works!
@@ -317,11 +317,11 @@ The First hole has goal: A → C, which is a function type.
 We split on null again to extract variable x since I do not prefer lambda function.
 Then the goal now is C
 Since we have context B⇔C : B ⇔ C, A⇔B : A ⇔ B, we can get type B → C and A → B by "to", 
-Then link these two function types, we get function type A → C, then we input A to convert it to C, which is the goal. 
+Then connect these two function types, we get function type A → C, then we input A to convert it to C, which is the goal. 
 --}
-to (⇔-trans A⇔B B⇔C) x = ((to B⇔C) ((to A⇔B) x)) 
+to (⇔-trans A⇔B B⇔C) x = ((to B⇔C) ∘ (to A⇔B)) x 
 -- The second case has similar idea.
-from (⇔-trans A⇔B B⇔C) x = ((from A⇔B) ((from B⇔C) x))
+from (⇔-trans A⇔B B⇔C) x = ((from A⇔B) ∘ (from B⇔C)) x
 
 -- 747/PLFA extended exercise: Canonical bitstrings.
 -- Modified and extended from Bin-predicates exercise in PLFA Relations.
@@ -405,22 +405,51 @@ _ = [pos] ([bitsx1] [x0])
 -- The increment of a canonical number has a leading one.
 
 one-inc : ∀ {n : Bin-ℕ} → Can n → One (inc n)
-one-inc cn = {!!}
+one-inc [zero] = [bitsx1]  -- Goal: One (bits x1), which is exactly constructor "[bitsx1]"
+--We need to case split variable below since we have no other information for proving.
+one-inc ([pos] [bitsx1]) = [bitsx1] [x0] -- Goal: One ((bits x1) x0), which is a specific number. We just get answer from constructor of type One
+one-inc ([pos] (x [x0])) = x [x1] -- Goal: One (n x1) and context x : One n, which can be transformed into the goal by appending x1.
+one-inc ([pos] (x [x1])) = one-inc ([pos] x) [x0] -- Goal: One (inc n x0) and context x : One n, 
+-- by induction we already have One (inc n), which can be transformed into the goal by appending x0.
+-- By the way, all cases above can be solved by C-c C-a
 
 -- The first canonicity property is now an easy corollary.
 
 -- 747/PLFA exercise: OneInc (1 point)
+{--
+Case split on cn and then case split on x, we then get four cases.
+The first three cases is trivial since they all can be solved by C-c C-a. 
+For the fourth cases, we have goal: Can (inc n x0) and context: x : One n.
+To get "inc n x0", we should first get "inc n" and then append x0.
+The only method to get "inc n" is one-inc, which input is type Can.
+So we use "[pos]" to convert x to type "Can" and then apply "one-inc".
+Now we have "(one-inc ([pos] x)) : One (inc n)", we then append x0,
+and then we have "(one-inc ([pos] x)) [x0] : One (inc n x0)".
+Finally, we use "[pos]" to convert type "One" into type "Can", then 
+we get "[pos] ((one-inc ([pos] x)) [x0]) : Can (inc n x0)", which is the goal. 
+--}
 
 can-inc : ∀ {n : Bin-ℕ} → Can n → Can (inc n)
-can-inc cn = {!!}
+can-inc [zero] = [pos] [bitsx1]
+can-inc ([pos] [bitsx1]) = [pos] ([bitsx1] [x0])
+can-inc ([pos] (x [x0])) = [pos] (x [x1])
+can-inc ([pos] (x [x1])) = [pos] ((one-inc ([pos] x)) [x0])
 
 -- The second canonicity property is that converting a unary number
 -- to binary produces a canonical number.
 
 -- 747/PLFA exercise: CanToB (1 point)
+{--
+The First case is trivial since it can be solved by C-c C-a.
+For the second case, we have goal: Can (inc (tob n)).
+By induction we have "to-can n : Can (tob n)".
+From signature of "tob" we know that "tob b : Bin-ℕ", which is exactly input type of can-inc.
+We apply "can-inc" to the induction, then we get the answer.
+--}
 
 to-can : ∀ (n : ℕ) → Can (tob n)
-to-can n = {!!}
+to-can zero = [zero]
+to-can (suc n) = can-inc (to-can n)
 
 -- The third canonicity property is that converting a canonical number
 -- from binary and back to unary produces the same number.
@@ -432,23 +461,56 @@ to-can n = {!!}
 
 -- This helper function relates binary double to the x0 constructor,
 -- for numbers with a leading one.
+{--
+After case split, we find that all cases are refl.
+Since it is very easy to prove this way, we dose not choose to find simpler solution.
+--}
 
 dblb-x0 : ∀ {n : Bin-ℕ} → One n → dblb n ≡ n x0
-dblb-x0 on = {!!}
+dblb-x0 [bitsx1] = refl
+dblb-x0 (on [x0]) = refl
+dblb-x0 (on [x1]) = refl
 
 -- We can now prove the third property for numbers with a leading one.
 
 -- 747/PLFA exercise: OneToFrom (3 points)
 
+dblb∘inc : ∀ (m : Bin-ℕ) → dblb (inc m) ≡ inc (inc (dblb m)) 
+dblb∘inc bits = refl
+dblb∘inc (m x0) = refl
+dblb∘inc (m x1) = refl
+
+to∘dbl : ∀ (m : ℕ) → tob (dbl m) ≡ dblb (tob m)
+to∘dbl zero = refl
+to∘dbl (suc m) rewrite to∘dbl m = sym (dblb∘inc (tob m))
+
+-- With this helper function we can get the implicit argument "n", which is very very very... important!
+to∘dbl∘fromb≡dblb∘tob∘fromb : ∀{n : Bin-ℕ} → One n → tob (dbl (fromb n)) ≡ dblb (tob (fromb n))
+to∘dbl∘fromb≡dblb∘tob∘fromb {n} on rewrite to∘dbl (fromb n) = refl
+
+{--
+Case split then we find the first case is trivial.
+For the first hole, we have goal: tob (dbl (fromb n)) ≡ (n x0), which we guess that it must utilize the rule of "dblb-x0".
+And by induction we already have "tob (fromb n) ≡ n", to utilize both two facts, we should have "tob (dbl (fromb n)) ≡ dblb (tob (fromb n))".
+Becase we then by induction reduce left term to "dblb n", then the goal becomes "dblb n ≡ n x0", which is exactly the rule "dblb-x0".
+Since we already have hint which tells us we need a helper function from 747Induction, we selected the right one and paste there.
+--}
+
 one-to∘from : ∀ {n : Bin-ℕ} → One n → tob (fromb n) ≡ n
-one-to∘from on = {!!}
+one-to∘from [bitsx1] = refl
+one-to∘from (on [x0]) 
+  rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
+one-to∘from (on [x1]) = {!   !}
 
 -- The third property is now an easy corollary.
 
 -- 747/PLFA exercise: CanToFrom (1 point)
+{--
 
+--}
 can-to∘from : ∀ {n : Bin-ℕ} → Can n → tob (fromb n) ≡ n
-can-to∘from cn = {!!}
+can-to∘from [zero] = refl
+can-to∘from ([pos] x) = one-to∘from x
 
 -- 747/PLFA exercise: OneUnique (2 points)
 -- Proofs of positivity are unique.
