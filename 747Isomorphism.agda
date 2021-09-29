@@ -493,14 +493,15 @@ Case split then we find the first case is trivial.
 For the first hole, we have goal: tob (dbl (fromb n)) ≡ (n x0), which we guess that it must utilize the rule of "dblb-x0".
 And by induction we already have "tob (fromb n) ≡ n", to utilize both two facts, we should have "tob (dbl (fromb n)) ≡ dblb (tob (fromb n))".
 Becase we then by induction reduce left term to "dblb n", then the goal becomes "dblb n ≡ n x0", which is exactly the rule "dblb-x0".
-Since we already have hint which tells us we need a helper function from 747Induction, we selected the right one and paste there.
+Since we already have hint which tells us we need a helper function from 747Induction, we selected the right one and paste above.
+The third case has quite similar idea of the second case.
 --}
 
 one-to∘from : ∀ {n : Bin-ℕ} → One n → tob (fromb n) ≡ n
 one-to∘from [bitsx1] = refl
 one-to∘from (on [x0]) 
   rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
-one-to∘from (on [x1]) = {!   !}
+one-to∘from (on [x1]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on | dblb-x0 on = refl
 
 -- The third property is now an easy corollary.
 
