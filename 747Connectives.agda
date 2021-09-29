@@ -124,9 +124,13 @@ to∘from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = refl
 
 -- 747/PLFA exercise: IffIsoIfOnlyIf (1 point)
 -- Show A ⇔ B is isomorphic to (A → B) × (B → A).
-
+{-- interactive solve --}
 iff-iso-if-onlyif : ∀ {A B : Set} → A ⇔ B ≃ (A → B) × (B → A)
-iff-iso-if-onlyif = {!!}
+_≃_.to iff-iso-if-onlyif record { to = to ; from = from } = ⟨ to , from ⟩
+to (from iff-iso-if-onlyif ⟨ x , x₁ ⟩) = x
+from (from iff-iso-if-onlyif ⟨ x , x₁ ⟩) = x₁
+from∘to iff-iso-if-onlyif record { to = to ; from = from } = refl
+to∘from iff-iso-if-onlyif ⟨ x , x₁ ⟩ = refl
 
 -- Logical True is a type with one member (unit)
 
@@ -203,9 +207,16 @@ infix 1 _⊎_
 
 -- 747/PLFA exercise: SumCommIso (1 point)
 -- Sum is commutative up to isomorphism.
-
+{--case split on every possible variable until it is easy to prove--}
 ⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
-⊎-comm = {!!}
+to ⊎-comm (inj₁ x) = inj₂ x
+to ⊎-comm (inj₂ x) = inj₁ x
+from ⊎-comm (inj₁ x) = inj₂ x
+from ⊎-comm (inj₂ x) = inj₁ x
+from∘to ⊎-comm (inj₁ x) = refl
+from∘to ⊎-comm (inj₂ x) = refl
+to∘from ⊎-comm (inj₁ x) = refl
+to∘from ⊎-comm (inj₂ x) = refl
 
 -- 747/PLFA exercise: SumAssocIso (1 point)
 -- Sum is associative up to isomorphism.

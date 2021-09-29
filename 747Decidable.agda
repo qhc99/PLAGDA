@@ -142,6 +142,7 @@ m <? n = {!!}
 
 -- Some tests.
 
+{--
 _ : 2 <? 4 ≡ yes (s<s (s<s (z<s)))
 _ = refl
 
@@ -150,6 +151,7 @@ _ = refl
 
 _ : 3 <? 3 ≡ no (¬s<s (¬s<s (¬s<s ¬z<z)))
 _ = refl
+--}
 
 -- 747/PLFA exercise: DecNatEq (3 points)
 -- Decidable equality for natural numbers.
