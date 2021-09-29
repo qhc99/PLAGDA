@@ -499,8 +499,7 @@ The third case has quite similar idea of the second case.
 
 one-to∘from : ∀ {n : Bin-ℕ} → One n → tob (fromb n) ≡ n
 one-to∘from [bitsx1] = refl
-one-to∘from (on [x0]) 
-  rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
+one-to∘from (on [x0]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
 one-to∘from (on [x1]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on | dblb-x0 on = refl
 
 -- The third property is now an easy corollary.
@@ -515,15 +514,31 @@ can-to∘from ([pos] x) = one-to∘from x
 
 -- 747/PLFA exercise: OneUnique (2 points)
 -- Proofs of positivity are unique.
-
+{--
+Case split both variable because we need knowledge both of variables, then we got three cases.
+The first case is trival since it is refl.
+The second case has goal: (x [x0]) ≡ (y [x0]), context x : One n, y : One n.
+By induction we have x ≡ y, after rewrite induction rule we get refl.
+The thrid case has quite similar idea.
+--}
 one-unique : ∀ {n : Bin-ℕ} → (x y : One n) → x ≡ y
-one-unique x y = {!!}
+one-unique [bitsx1] [bitsx1] = refl
+one-unique (x [x0]) (y [x0]) rewrite one-unique x y = refl
+one-unique (x [x1]) (y [x1]) rewrite one-unique x y = refl
 
 -- 747/PLFA exercise: CanUnique (1 point)
 -- Proofs of canonicity are unique.
+{--
+Case split both variable because we need knowledge both of variables, then we got two cases.
+The first case is trival since its goal is refl.
+The second case has goal: [pos] x ≡ [pos] x₁, where x and x₁ is type One n.
+So here we need the rule "one-unique" because "can-unique" input type is "Can n".
+After rewrite we got refl in the second case.
+--}
 
 can-unique : ∀ {n : Bin-ℕ} → (x y : Can n) → x ≡ y
-can-unique x y = {!!}
+can-unique [zero] [zero] = refl
+can-unique ([pos] x) ([pos] x₁) rewrite one-unique x x₁ = refl
 
 -- Do we have an isomorphism between ℕ (unary) and canonical binary representations?
 -- Can is not a set, but a family of sets, so it doesn't quite fit
