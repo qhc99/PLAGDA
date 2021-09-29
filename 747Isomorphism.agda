@@ -490,10 +490,12 @@ to∘dbl∘fromb≡dblb∘tob∘fromb {n} on rewrite to∘dbl (fromb n) = refl
 
 {--
 Case split then we find the first case is trivial.
-For the first hole, we have goal: tob (dbl (fromb n)) ≡ (n x0), which we guess that it must utilize the rule of "dblb-x0".
+
+For the second hole, we have goal: tob (dbl (fromb n)) ≡ (n x0), which we guess that it must utilize the rule of "dblb-x0".
 And by induction we already have "tob (fromb n) ≡ n", to utilize both two facts, we should have "tob (dbl (fromb n)) ≡ dblb (tob (fromb n))".
 Becase we then by induction reduce left term to "dblb n", then the goal becomes "dblb n ≡ n x0", which is exactly the rule "dblb-x0".
 Since we already have hint which tells us we need a helper function from 747Induction, we selected the right one and paste above.
+
 The third case has quite similar idea of the second case.
 --}
 
@@ -506,6 +508,7 @@ one-to∘from (on [x1]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-t
 
 -- 747/PLFA exercise: CanToFrom (1 point)
 {--
+After case split, the first case is trivial and the second case is obviously the function "one-to∘from".
 
 --}
 can-to∘from : ∀ {n : Bin-ℕ} → Can n → tob (fromb n) ≡ n
@@ -585,9 +588,12 @@ Basically, there we need to build projection relation between type CanR and type
 Split on null we then get four cases which is required by the definition of ≃.
 For the first case, we need build CanR from ℕ, CanR has two fields, which are type Bin-ℕ and type Can.
 So we just convert ℕ to Bin-ℕ and to Can, and then using the constructor of Can. Then we solved this case.
+
 For the second case, we can get Bin-ℕ from x : CanR using destructor n, which should be prefixed with CanR since it is not open.
 Then we use fromb to convert Bin-ℕ to ℕ, then we get the goal.
+
 The goal of thrid case is exactly the exercise of 747Induction, so we just copy and paste above.
+
 In the fourth case we have to split after we have tested other ways of prove.
 After case split, it is clear that we can using the helper function "rewrap" above.
 According to the signature of rewrap and the context, we have the first two arguments of rewrap.

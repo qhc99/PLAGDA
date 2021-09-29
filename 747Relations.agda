@@ -416,7 +416,7 @@ Goal: even (suc (m + n)).
 We have context: on: odd n, x: even m.
 From goal, we infer that: suc ?: even (suc (m + n)), ?: odd (m + n)
 To fill the hole above, we need the rule: o+e≡o on x: odd (n + m)
-Then we can get "suc (o+e≡o on x): even (suc (n + m))", which obviously needs rewrite "+-comm m n". 
+Then we can get "suc (o+e≡o on x): even (suc (n + m))", which obviously needs to rewrite "+-comm m n". 
 --}
 
 -- For remarks on which of these definitions are in the standard library, see PLFA.
