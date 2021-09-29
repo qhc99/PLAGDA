@@ -557,14 +557,49 @@ record CanR : Set where
 
 -- 747/PLFA exercise: Rewrap (1 point)
 -- This helper will be useful.
+{--
+Case split on null, we got three variables.
+Goal: mk-CanR m x ≡ mk-CanR n y
+Since we have m ≡ n, by rewrite we eliminate the difference between m and n in the goal. 
+Then goal becomes "mk-CanR lhs x ≡ mk-CanR lhs y".
+Since we have had the rule can-unique, we can eliminate the difference between x and y by rewrite.
+Then we got two same terms in both sides, which is refl.
+--}
 
 rewrap : ∀ {m n} x y → m ≡ n → mk-CanR m x ≡ mk-CanR n y
-rewrap = {!!}
+rewrap x y x₁ rewrite x₁ | can-unique x y = refl
 
 -- 747/PLFA exercise: IsoNCanR (2 points)
 
+from∘inc : ∀ (m : Bin-ℕ) → fromb (inc m) ≡ suc (fromb m)
+from∘inc bits = refl
+from∘inc (m x0) = refl
+from∘inc (m x1) rewrite from∘inc m = refl
+
+from∘tob : ∀ (m : ℕ) → fromb (tob m) ≡ m
+from∘tob zero = refl
+from∘tob (suc m) rewrite from∘inc (tob m) | from∘tob m = refl
+
+{--
+Basically, there we need to build projection relation between type CanR and type ℕ.
+Split on null we then get four cases which is required by the definition of ≃.
+For the first case, we need build CanR from ℕ, CanR has two fields, which are type Bin-ℕ and type Can.
+So we just convert ℕ to Bin-ℕ and to Can, and then using the constructor of Can. Then we solved this case.
+For the second case, we can get Bin-ℕ from x : CanR using destructor n, which should be prefixed with CanR since it is not open.
+Then we use fromb to convert Bin-ℕ to ℕ, then we get the goal.
+The goal of thrid case is exactly the exercise of 747Induction, so we just copy and paste above.
+In the fourth case we have to split after we have tested other ways of prove.
+After case split, it is clear that we can using the helper function "rewrap" above.
+According to the signature of rewrap and the context, we have the first two arguments of rewrap.
+Now we need only to build the thrid argument, which can be built by function "can-to∘from". 
+Then we got the answer.
+--}
+
 iso-ℕ-CanR : ℕ ≃ CanR
-iso-ℕ-CanR = {!!}
+to iso-ℕ-CanR x = mk-CanR (tob x) (to-can x)
+from iso-ℕ-CanR x = fromb (CanR.n x)
+from∘to iso-ℕ-CanR x = from∘tob x
+to∘from iso-ℕ-CanR (mk-CanR n cpf) rewrite rewrap (to-can (fromb n)) cpf (can-to∘from cpf) = refl
 
 -- Can we get an isomorphism between ℕ and some binary encoding,
 -- without the awkwardness of non-canonical values?
