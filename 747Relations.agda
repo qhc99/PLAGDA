@@ -226,8 +226,10 @@ data _<_ : ℕ → ℕ → Set where
 
 {--
 Try case split variables and find case split two variable is much more easier to prove than case split only one variable.
-First hole has goal: zero < suc n, thus we fill "z<s"
-Second hole has goal:　suc m < suc n, which is the ouput is "s<s". Input s<s and refine, we have goal: m < n, and context: 
+
+The First hole has goal: zero < suc n, thus we fill "z<s"
+
+The Second hole has goal:　suc m < suc n, which is the ouput is "s<s". Input s<s and refine, we have goal: m < n, and context: 
 n<p : n₁ < n, m<n : m < n₁. By induction, we should fill "<-trans m<n n<p", which is quite obvious.
 --}
 <-trans : ∀ {m n p : ℕ} → m < n → n < p → m < p
@@ -247,7 +249,9 @@ m≡n→suc-m≡suc-n refl = refl
 
 {--
 For Trichotomy m n, we have three cases.
+
 In the first case, we have m < n in context, by constructor "s<s" we can get suc m < suc n, which is similar to the thrid case.
+
 In the second case, we need the rule m ≡ n → suc m ≡ suc n, so we set the other helper function above, which is quite easy to prove.
 --}
 suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
@@ -257,12 +261,17 @@ suc-<-trichotomy (is-> x) = is-> (s<s x)
 
 {--
 Case split both m and n, since we need knowledge both m and n.
-First hole has goal: Trichotomy zero zero, so we should apply ≡ rule, input "is-≡" and refine, get goal: zero ≡ zero, which 
+
+The First hole has goal: Trichotomy zero zero, so we should apply ≡ rule, input "is-≡" and refine, get goal: zero ≡ zero, which 
 is refl, then the answer is "is-≡ refl" here.
-Second hole after refine "is-<", we get goal: zero < suc n, which is constructor "z<s", refine input, then answer is "is-< z<s".
-Thrid hole after refine "is->", we get goal: zero < suc m, which is same as the above case.
-Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by induction, which needs a helper function above.
+
+The Second hole after refine "is-<", we get goal: zero < suc n, which is constructor "z<s", refine input, then answer is "is-< z<s".
+
+The Thrid hole after refine "is->", we get goal: zero < suc m, which is same as the above case.
+
+The Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by induction, which needs a helper function above.
 --}
+
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
 <-trichotomy zero zero = is-≡ refl 
 <-trichotomy zero (suc n) = is-< z<s
@@ -318,6 +327,7 @@ Since +-mono-< and +-mono-≤ have same prove structrue, we copy the code of +-m
 {--
 First goal: 1 ≤ suc n. It is actually solved by C-c C-a. 
 We have "zero ≤ n" by "z≤n", by "s≤s" it is transformed into suc zero ≤ suc n, which is "1 ≤ suc n".
+
 Second goal: suc (suc m) ≤ suc n, It is again solved by C-c C-a.
 By induction we have "suc m ≤ n" from "m < n", then by constructor "s≤s" we get suc (suc m) ≤ suc n 
 --}
@@ -334,6 +344,7 @@ By induction we have "suc m ≤ n" from "m < n", then by constructor "s≤s" we 
 
 -- PLFA exercise: use the above to give a proof of <-trans that uses ≤-trans.
 
+-- trivial helper function
 n≤suc-n : ∀ {n : ℕ} → n ≤ suc n
 n≤suc-n {zero} = z≤n
 n≤suc-n {suc n} = s≤s n≤suc-n

@@ -520,8 +520,10 @@ can-to∘from ([pos] x) = one-to∘from x
 {--
 Case split both variable because we need knowledge both of variables, then we got three cases.
 The first case is trival since it is refl.
+
 The second case has goal: (x [x0]) ≡ (y [x0]), context x : One n, y : One n.
 By induction we have x ≡ y, after rewrite induction rule we get refl.
+
 The thrid case has quite similar idea.
 --}
 one-unique : ∀ {n : Bin-ℕ} → (x y : One n) → x ≡ y
@@ -534,6 +536,7 @@ one-unique (x [x1]) (y [x1]) rewrite one-unique x y = refl
 {--
 Case split both variable because we need knowledge both of variables, then we got two cases.
 The first case is trival since its goal is refl.
+
 The second case has goal: [pos] x ≡ [pos] x₁, where x and x₁ is type One n.
 So here we need the rule "one-unique" because "can-unique" input type is "Can n".
 After rewrite we got refl in the second case.
