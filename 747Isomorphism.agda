@@ -589,6 +589,7 @@ from∘tob (suc m) rewrite from∘inc (tob m) | from∘tob m = refl
 {--
 Basically, there we need to build projection relation between type CanR and type ℕ.
 Split on null we then get four cases which is required by the definition of ≃.
+
 For the first case, we need build CanR from ℕ, CanR has two fields, which are type Bin-ℕ and type Can.
 So we just convert ℕ to Bin-ℕ and to Can, and then using the constructor of Can. Then we solved this case.
 
