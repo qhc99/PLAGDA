@@ -217,12 +217,22 @@ Evaluation goes from right to left bit by bit. When overflow ocurrs in the curre
 So we call inc on next part of binary sequence, That is a recursive process.
 --}
 _bin-+_ : Bin-ℕ → Bin-ℕ → Bin-ℕ
+bits bin-+ n = n
+(m x0) bin-+ bits = m x0
+(m x0) bin-+ (n x0) = (m bin-+ n) x0
+(m x0) bin-+ (n x1) = (m bin-+ n) x1
+(m x1) bin-+ bits = m x1
+(m x1) bin-+ (n x0) = (m bin-+ n) x1
+(m x1) bin-+ (n x1) = inc (m bin-+ n) x0
+
+{--
 bits bin-+ n = n -- base cases, one of two binary decay to "bits" when they have different length
 m bin-+ bits = m
 (m x0) bin-+ (n x0) = (m bin-+ n) x0 -- 3 simple cases which dose not carry 1 into former part
 (m x0) bin-+ (n x1) = (m bin-+ n) x1
 (m x1) bin-+ (n x0) = (m bin-+ n) x1
 (m x1) bin-+ (n x1) = (inc (m bin-+ n)) x0 -- final case which carry 1 into former part
+--}
 
 
 -- Tests can use to/from, or write out binary constants as below.
