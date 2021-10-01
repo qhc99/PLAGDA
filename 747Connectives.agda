@@ -3,7 +3,7 @@ module 747Connectives where
 -- Library
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; refl; cong)
 open Eq.≡-Reasoning
 open import Data.Nat using (ℕ)
 open import Function using (_∘_)
@@ -124,11 +124,23 @@ to∘from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = refl
 
 -- 747/PLFA exercise: IffIsoIfOnlyIf (1 point)
 -- Show A ⇔ B is isomorphic to (A → B) × (B → A).
-{-- interactive solve --}
+{-- 
+First case: 
+Case split on null, then case split on variable x, we have goal "(A → B) × (B → A)", and context "to : A → B" and "from : B → A",
+Then we just construct the goal using operator "⟨_,_⟩".
+
+Second case:
+It is the inverse of the first case, basically we can copy, paste and invert order of input and output of the first case.
+
+Third case and fourth case:
+Case split two times. 
+The goal of thrid case is not obviously refl, but after refine it becomes refl.
+The goal of fourth case is obvious refl.
+--}
+
 iff-iso-if-onlyif : ∀ {A B : Set} → A ⇔ B ≃ (A → B) × (B → A)
 _≃_.to iff-iso-if-onlyif record { to = to ; from = from } = ⟨ to , from ⟩
-to (from iff-iso-if-onlyif ⟨ x , x₁ ⟩) = x
-from (from iff-iso-if-onlyif ⟨ x , x₁ ⟩) = x₁
+from iff-iso-if-onlyif ⟨ x , x₁ ⟩ = record { to = x ; from = x₁ }
 from∘to iff-iso-if-onlyif record { to = to ; from = from } = refl
 to∘from iff-iso-if-onlyif ⟨ x , x₁ ⟩ = refl
 
@@ -140,19 +152,27 @@ data ⊤ : Set where
     --
     ⊤
 
--- η-⊤ : ∀ (w : ⊤) → tt ≡ w
--- η-⊤ w = {!!}
+η-⊤ : ∀ (w : ⊤) → tt ≡ w
+η-⊤ tt = refl
 
 ⊤-count : ⊤ → ℕ
 ⊤-count tt = 1
 
 -- Unit is the left and right identity of product.
 
--- ⊤-identityˡ : ∀ {A : Set} → ⊤ × A ≃ A
--- ⊤-identityˡ = {!!}
+⊤-identityˡ : ∀ {A : Set} → ⊤ × A ≃ A
+to ⊤-identityˡ = proj₂
+from ⊤-identityˡ = λ a → ⟨ tt , a ⟩
+from∘to ⊤-identityˡ ⟨ w , a ⟩  = cong (λ z → ⟨ z , a ⟩ ) (η-⊤ w)
+to∘from ⊤-identityˡ = λ _ → refl
 
--- ⊤-identityʳ : ∀ {A : Set} → (A × ⊤) ≃ A
--- ⊤-identityʳ = {!!}
+⊤-identityʳ : ∀ {A : Set} → (A × ⊤) ≃ A
+⊤-identityʳ = 
+  mk-≃ 
+    proj₁ 
+    (λ a → ⟨ a , tt ⟩) 
+    (λ { ⟨ a , w ⟩ → cong (λ z → ⟨ a , z ⟩) (η-⊤ w) }) 
+    λ _ → refl
 
 -- Logical OR (disjunction) is sum (disjoint union).
 
@@ -207,7 +227,11 @@ infix 1 _⊎_
 
 -- 747/PLFA exercise: SumCommIso (1 point)
 -- Sum is commutative up to isomorphism.
-{--case split on every possible variable until it is easy to prove--}
+{--
+Case split on every possible variable until it is easy to prove
+We can using pattern matching on lambda to make number of cases less than below.
+But two ways of prove are equivalent and we prefer easy answer.
+--}
 ⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
 to ⊎-comm (inj₁ x) = inj₂ x
 to ⊎-comm (inj₂ x) = inj₁ x
@@ -218,11 +242,28 @@ from∘to ⊎-comm (inj₂ x) = refl
 to∘from ⊎-comm (inj₁ x) = refl
 to∘from ⊎-comm (inj₂ x) = refl
 
+
 -- 747/PLFA exercise: SumAssocIso (1 point)
 -- Sum is associative up to isomorphism.
-
+{--
+We case split until variable not contain "⊍".
+"to" and "from" of isomorphism are solved using inj according to the variable's position in the goal.
+"to∘from" and "from∘to" of isomorphism become refl when split to ends.
+--}
 ⊎-assoc : ∀ {A B C : Set} → (A ⊎ B) ⊎ C ≃ A ⊎ (B ⊎ C)
-⊎-assoc = {!!}
+to ⊎-assoc (inj₁ (inj₁ x)) = inj₁ x
+to ⊎-assoc (inj₁ (inj₂ x)) = inj₂ (inj₁ x)
+to ⊎-assoc (inj₂ x) = inj₂ (inj₂ x)
+from ⊎-assoc (inj₁ x) = inj₁ (inj₁ x)
+from ⊎-assoc (inj₂ (inj₁ x)) = inj₁ (inj₂ x)
+from ⊎-assoc (inj₂ (inj₂ x)) = inj₂ x
+from∘to ⊎-assoc (inj₁ (inj₁ x)) = refl
+from∘to ⊎-assoc (inj₁ (inj₂ x)) = refl
+from∘to ⊎-assoc (inj₂ x) = refl
+to∘from ⊎-assoc (inj₁ x) = refl
+to∘from ⊎-assoc (inj₂ (inj₁ x)) = refl
+to∘from ⊎-assoc (inj₂ (inj₂ x)) = refl
+
 
 -- Logical False is the empty type ("bottom", "empty").
 
@@ -246,15 +287,25 @@ uniq-⊥ h ()
 
 -- 747/PLFA exercise: EmptyLeftIdSumIso (1 point)
 -- Empty is the left unit of sum up to isomorphism.
-
+{--
+Case split consecutively until it is very easy to prove.
+--}
 ⊎-identityˡ : ∀ {A : Set} → ⊥ ⊎ A ≃ A
-⊎-identityˡ = {!!}
+to ⊎-identityˡ (inj₂ x) = x
+from ⊎-identityˡ x = inj₂ x
+from∘to ⊎-identityˡ (inj₂ x) = refl
+to∘from ⊎-identityˡ y = refl
 
 -- 747/PLFA exercise: EmptyRightIdSumIso (1 point)
 -- Empty is the right unit of sum up to isomorphism.
-
+{--
+Same idea as the exercise above.
+--}
 ⊎-identityʳ : ∀ {A : Set} → A ⊎ ⊥ ≃ A
-⊎-identityʳ = {!!}
+to ⊎-identityʳ (inj₁ x) = x
+from ⊎-identityʳ x = inj₁ x
+from∘to ⊎-identityʳ (inj₁ x) = refl
+to∘from ⊎-identityʳ = λ _ → refl
 
 -- Logical implication (if-then) is... the function type constructor!
 -- Eliminating an if-then (modus ponens) is function application.
@@ -342,15 +393,26 @@ _≲_.from∘to ⊎-distrib-× (inj₂ x) = refl
 -- Think of a counterexample to show the above isn't an isomorphism.
 
 -- PLFA exercise: a weak distributive law.
--- ⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
--- ⊎-weak-× A⊎B×C = {!!}
+{--
+The first case, we have "A" and "C", then using inj₁ on "A", we get "A ⊎ (B × C)".
+The second case, we have "B" and "C", then we have "B × C" and finally the goal by inj₂.
+--}
+⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
+⊎-weak-× ⟨ inj₁ x , x₁ ⟩ = inj₁ x
+⊎-weak-× ⟨ inj₂ x , x₁ ⟩ = inj₂ ⟨ x , x₁ ⟩
 -- State and prove the strong law, and explain the relationship.
 
 -- 747/PLFA exercise: SumOfProdImpProdOfSum (1 point)
 -- A disjunct of conjuncts implies a conjunct of disjuncts.
-
+{--
+Case split and pattern matching, then reconstruct according to context and variable position, which 
+is used to determine which injunction to use.
+In the first case, we have "A × B", which means "A" and "B". Then we can get "A ⊎ C" by inj₁ and "B ⊍ D" similarly.
+The second case has same idea.
+--}
 ⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
-⊎×-implies-×⊎ A×B⊎C×D = {!!}
+⊎×-implies-×⊎ (inj₁ ⟨ a , b ⟩) = ⟨ inj₁ a , inj₁ b ⟩
+⊎×-implies-×⊎ (inj₂ ⟨ c , d ⟩) = ⟨ inj₂ c , inj₂ d ⟩
 
 -- PLFA exercise: Is the converse true? If so, prove it; if not, give a counterexample.
 
