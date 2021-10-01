@@ -2,7 +2,7 @@ module 747Negation where
 
 -- Library
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl) -- added last
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong) -- added last
 open import Data.Nat using (ℕ; zero; suc) 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -111,15 +111,21 @@ data _<_ : ℕ → ℕ → Set where
 
 -- 747/PLFA exercise: NotFourLTThree (1 point)
 -- Show ¬ (4 < 3).
-
+{--
+Case split on null, then case split on variable consecutively until it is absurd.
+--}
 ¬4<3 : ¬ (4 < 3)
-¬4<3 = {!!}
+¬4<3 (s<s (s<s (s<s ())))
 
 -- 747/PLFA exercise: LTIrrefl (1 point)
 -- < is irreflexive (never reflexive).
-
-¬n<n : ∀ (n : ℕ) → ¬ (n < n)
-¬n<n n = {!!}
+{--
+Case split both on n and x.
+By induction, we input "¬n<n n" and refine, find its context is: "x : n < n" and goal n < n, then we got the answer.
+--}
+¬n<n : ∀ (n : ℕ) → ¬ n < n
+¬n<n zero ()
+¬n<n (suc n) (s<s x) = ¬n<n n x
 
 -- 747/PLFA exercise: LTTrich (3 points)
 -- Show that strict inequality satisfies trichotomy,
@@ -131,11 +137,36 @@ data Trichotomy (m n : ℕ) : Set where
   is-≡ : m ≡ n → ¬ m < n → ¬ n < m → Trichotomy m n
   is-> : n < m → ¬ m ≡ n → ¬ m < n → Trichotomy m n
 
+suc-¬-< : ∀ {m n : ℕ} → ¬ m < n → ¬ (suc m) < (suc n)
+suc-¬-< x (s<s x₁) = x x₁
+
+suc-¬-≡ : ∀ {m n : ℕ} → ¬ m ≡ n → ¬ (suc m) ≡ (suc n)
+suc-¬-≡ x refl = x refl
+
+suc-≡ : ∀ {m n : ℕ} → m ≡ n → (suc m) ≡ (suc n)
+suc-≡ refl = refl
+
+{--
+Basically we need to prove that the suc of both terms of relation still hold. 
+Thus we set three trivial helper function above.
+--}
+suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
+suc-<-trichotomy (is-< x x₁ x₂) = is-< (s<s x) (suc-¬-≡ x₁) (suc-¬-< x₂)
+suc-<-trichotomy (is-≡ x x₁ x₂) = is-≡ (suc-≡ x) (suc-¬-< x₁) (suc-¬-< x₂)
+suc-<-trichotomy (is-> x x₁ x₂) = is-> (s<s x) (suc-¬-≡ x₁) (suc-¬-< x₂)
+
+{--
+Case split both on m and n, the first three cases is trivial since they can be solved by C-c C-a.
+With the experience of trichotomy exercise before, we set suc-<-trichotomy helper function.
+--}
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
-<-trichotomy m n = {!!}
+<-trichotomy zero zero = is-≡ refl (λ ()) (λ ())
+<-trichotomy zero (suc n) = is-< z<s (λ ()) (λ ())
+<-trichotomy (suc m) zero = is-> z<s (λ ()) (λ ())
+<-trichotomy (suc m) (suc n) = suc-<-trichotomy (<-trichotomy m n)
 
 -- PLFA exercise: one of DeMorgan's Laws as isomorphism
--- ⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
+--⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
 -- Expand negation as implies-false, then look in 747Relations
 -- for a law of which this is a special case.
 
