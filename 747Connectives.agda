@@ -228,9 +228,8 @@ infix 1 _⊎_
 -- 747/PLFA exercise: SumCommIso (1 point)
 -- Sum is commutative up to isomorphism.
 {--
-Case split on every possible variable until it is easy to prove
-We can using pattern matching on lambda to make number of cases less than below.
-But two ways of prove are equivalent and we prefer easy answer.
+Case split on every possible variable until it is dose not contain "⊍".
+Then from context the goal is very easy to prove.
 --}
 ⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
 to ⊎-comm (inj₁ x) = inj₂ x
@@ -247,7 +246,10 @@ to∘from ⊎-comm (inj₂ x) = refl
 -- Sum is associative up to isomorphism.
 {--
 We case split until variable not contain "⊍".
-"to" and "from" of isomorphism are solved using inj according to the variable's position in the goal.
+
+"to" and "from" of isomorphism are solved using inj according to the variable's position in the goal, basically if 
+the variable appear in the first term of "⊍" in the goal, we use inj₁. Otherwise we use inj₂.
+
 "to∘from" and "from∘to" of isomorphism become refl when split to ends.
 --}
 ⊎-assoc : ∀ {A B C : Set} → (A ⊎ B) ⊎ C ≃ A ⊎ (B ⊎ C)
