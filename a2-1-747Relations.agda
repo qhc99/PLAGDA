@@ -168,20 +168,24 @@ open import Data.Nat.Properties using (*-comm)
 {--
 we solve this by copying the structrue of +-mono-≤ and resolve conflicts
 --}
+
+{--
+The first case: 
+Goal: "zero ≤ zero", so fill "z≤n" here
+
+The second case: 
+goal: "p + m * p ≤ q + m * q"
+The context: "p ≤ q" and, by induction, we have "(m * q) ≤ (m * q)".
+From rule: "+-mono-≤ : ∀ (m n p q : ℕ) → m ≤ n → p ≤ q → m + p ≤ n + q", we can 
+get "p + m * p ≤ q + m * q", which is the goal.
+--}
 *-monoʳ-≤ : ∀ (m p q : ℕ)
   → p ≤ q
     -------------
   → m * p ≤ m * q
 
-*-monoʳ-≤ zero p q p≤q = z≤n -- goal: zero ≤ zero, so fill z≤n here
+*-monoʳ-≤ zero p q p≤q = z≤n
 *-monoʳ-≤ (suc m) p q p≤q = +-mono-≤ p q (m * p) (m * q) p≤q (*-monoʳ-≤ m p q p≤q) 
-{--
-The second case: 
-goal: p + m * p ≤ q + m * q
-The context: p ≤ q and, by induction, we have (m * q) ≤ (m * q).
-From rule: +-mono-≤ : ∀ (m n p q : ℕ) → m ≤ n → p ≤ q → m + p ≤ n + q, we 
-can get "p + m * p ≤ q + m * q", which is the goal.
---}
 
 {--
 Below we just copied the proof of +-monoˡ-≤ and change "+" to "*" everywhere, then prove successed surprisingly!
@@ -195,15 +199,15 @@ Do not forget to import "_*_" and "*-comm" accordingly.
 *-monoˡ-≤ m n p m≤n rewrite *-comm m p | *-comm n p = *-monoʳ-≤ p m n m≤n
 
 {--
-Same as the prove of *-monoˡ-≤, just copy and change "+" to "*".
-Since monotonicity of ≤ has its own prove structrue, we can just change a few lines of code to adapt +-mono-≤ to *-mono-≤.
+Just copy and change "+" to "*".
+Since monotonicity of ≤ has its own proving structrue, we can just change 
+a few lines of code to adapt +-mono-≤ to *-mono-≤.
 --}
 *-mono-≤ : ∀ (m n p q : ℕ) -- combine above
   → m ≤ n
   → p ≤ q
     -------------
   → m * p ≤ n * q
-
 *-mono-≤ m n p q m≤n p≤q = ≤-trans (*-monoʳ-≤ m p q p≤q ) (*-monoˡ-≤ m n q m≤n)
 
 -- Strict inequality.
@@ -226,12 +230,14 @@ data _<_ : ℕ → ℕ → Set where
 -- Order of arguments changed from PLFA, to match ≤-trans.
 
 {--
-Try case split variables and find case split two variable is much more easier to prove than case split only one variable.
+Try case split variables and find case spliting two variable is much more easier to prove 
+than case spliting only one variable.
 
-The First hole has goal: zero < suc n, so we fill "z<s"
+The First hole has goal: "zero < suc n", so we fill "z<s"
 
-The Second hole has goal:　suc m < suc n, which is the ouput is "s<s". Input s<s and refine, we have goal: m < n, and
-context: n<p : n₁ < n, m<n : m < n₁. By induction, we should fill "<-trans m<n n<p" here.
+The Second hole has goal:　"suc m < suc n", which is the ouput is "s<s". Input "s<s" and refine, 
+we have goal: "m < n", and context: "n<p : n₁ < n", "m<n : m < n₁". 
+By induction, we can fill "<-trans m<n n<p" here.
 --}
 <-trans : ∀ {m n p : ℕ} → m < n → n < p → m < p
 <-trans z<s (s<s n<p) = z<s
@@ -245,13 +251,14 @@ data Trichotomy (m n : ℕ) : Set where
   is-≡ : m ≡ n → Trichotomy m n
   is-> : n < m → Trichotomy m n
 
+-- Trivial helper function.
 m≡n→suc-m≡suc-n : ∀ {m n : ℕ} → m ≡ n → suc m ≡ suc n
 m≡n→suc-m≡suc-n refl = refl
 
 {--
 In the first case, we have "m < n" in context, by constructor "s<s" we can get suc m < suc n, which is similar to the thrid case.
 
-In the second case, we need the rule m ≡ n → suc m ≡ suc n, so we set the other helper function above, which is quite easy to prove.
+In the second case, we need the rule "m ≡ n → suc m ≡ suc n", so we set the helper function above, which is quite easy to prove.
 --}
 suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
 suc-<-trichotomy (is-< x) = is-< (s<s x)
@@ -261,14 +268,14 @@ suc-<-trichotomy (is-> x) = is-> (s<s x)
 {--
 Case split both m and n, since we need knowledge both m and n.
 
-The First hole has goal: Trichotomy zero zero, so we should apply ≡ rule, input "is-≡" and refine, get goal: zero ≡ zero, which 
-is refl, then the answer is "is-≡ refl" here.
+The First hole has goal: "Trichotomy zero zero", so we should apply ≡ rule, input "is-≡" and refine, 
+get goal: "zero ≡ zero", which is refl. Then the answer is "is-≡ refl" here.
 
-The Second hole after refine "is-<", we get goal: zero < suc n, which is constructor "z<s", refine input, then answer is "is-< z<s".
+The Second hole after refine "is-<", we get goal: "zero < suc n", which is constructor "z<s". 
 
-The Thrid hole after refine "is->", we get goal: zero < suc m, which is same as the above case.
+The Thrid hole after refine "is->", we get goal: "zero < suc m", which is same as the above case.
 
-The Fourth hole has goal: Trichotomy (suc m) (suc n), it should be proved by induction, which needs a helper function above.
+The Fourth hole has goal: "Trichotomy (suc m) (suc n)", it should be proved by induction, which is the helper function above.
 --}
 
 <-trichotomy : ∀ (m n : ℕ) → Trichotomy m n
@@ -311,11 +318,12 @@ Since +-mono-< and +-mono-≤ have very same proving structrue, we copy the code
 -- 747/PLFA exercise: LEtoLTS (1 point)
 {--
 The first case:
-Goal: zero < suc n, which is exactly what "z<s" means.
+Goal: "zero < suc n", which is exactly what "z<s" means.
 
 The second case:
-Goal: suc m < suc (suc n), we can get "m < suc n" from "m ≤ n" and "≤-<-to" by induction, 
-then by constructor "s<s" we finally get "suc m < suc (suc n)".
+Goal: "suc m < suc (suc n)".
+We can get "m < suc n" from "m ≤ n" and "≤-<-to" by induction. 
+Then by constructor "s<s" we get the goal "suc m < suc (suc n)".
 --}
 ≤-<-to : ∀ {m n : ℕ} → m ≤ n → m < suc n
 ≤-<-to z≤n = z<s
@@ -324,8 +332,9 @@ then by constructor "s<s" we finally get "suc m < suc (suc n)".
 
 -- 747/PLFA exercise: LEStoLT (1 point)
 {--
-Goal: m < suc n, context: sm≤n : m ≤ n, and we have rule: "≤-<-to : ∀ {m n : ℕ} → m ≤ n → m < suc n", where the input 
-is sm≤n and ouput is exactly the goal.
+Goal: "m < suc n".
+Context: "sm≤n : m ≤ n". 
+We have rule: "≤-<-to : ∀ {m n : ℕ} → m ≤ n → m < suc n", where the input is type of "sm≤n" and ouput is exactly the goal.
 --}
 ≤-<--to′ : ∀ {m n : ℕ} → suc m ≤ n → m < n
 ≤-<--to′ (s≤s sm≤n) = ≤-<-to sm≤n 
@@ -333,22 +342,29 @@ is sm≤n and ouput is exactly the goal.
 
 -- 747/PLFA exercise: LTtoSLE (1 point)
 {--
-The first goal: 1 ≤ suc n.
-We have "zero ≤ n" by "z≤n", by "s≤s" it is transformed into suc zero ≤ suc n, which is "1 ≤ suc n".
+The first goal: "1 ≤ suc n".
+We have "zero ≤ n" from "z≤n", by "s≤s" it is transformed into "suc zero ≤ suc n", which is "1 ≤ suc n".
 
-The second goal: suc (suc m) ≤ suc n.
-By induction we have "suc m ≤ n" from "m < n", then by constructor "s≤s" we get suc (suc m) ≤ suc n 
+The second goal: "suc (suc m) ≤ suc n."
+By induction we have "suc m ≤ n" from "m < n", then by constructor "s≤s" we get the goal.
 --}
 ≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n
 ≤-<-from z<s = s≤s z≤n 
 ≤-<-from (s<s m<n)  = s≤s (≤-<-from m<n)
 
 -- 747/PLFA exercise: LTStoLE (1 point)
+{--
+The first case:
+Goal: "zero ≤ n", which is "z≤n".
 
+The second case:
+Goal: "suc m ≤ n"
+Context: "m<sn : m < n". 
+We have "≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n", which output is the goal and input type matchs context "m<sn".
+--}
 ≤-<-from′ : ∀ {m n : ℕ} → m < suc n → m ≤ n
-≤-<-from′ z<s = z≤n -- Goal: zero ≤ n, obvious answer
+≤-<-from′ z<s = z≤n 
 ≤-<-from′ (s<s m<sn) = ≤-<-from m<sn 
--- Goal: suc m ≤ n, context: m<sn : m < n, and we have "≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n", obvious answer again.
 
 -- PLFA exercise: use the above to give a proof of <-trans that uses ≤-trans.
 
@@ -359,10 +375,10 @@ n≤suc-n {suc n} = s≤s n≤suc-n
 
 {--
 By "≤-<-from : ∀ {m n : ℕ} → m < n → suc m ≤ n", we get two results below:
-m < n → "suc m ≤ n",
-n < p → "suc n ≤ p".
+≤-<-from  m<n → "suc m ≤ n",
+≤-<-from  n<p → "suc n ≤ p".
 
-By ≤-trans we get "suc m ≤ suc n" on input ""suc m ≤ n" and a helper function "n ≤ suc n".
+By ≤-trans we get "suc m ≤ suc n" on input ""suc m ≤ n" and "n ≤ suc n", which is a helper function.
 
 Then by ≤-trans again we get "suc m ≤ p" from the fact that "suc m ≤ suc n" and "suc n ≤ p".
 
@@ -422,18 +438,18 @@ o+e≡o (suc x) en = suc (e+e≡e x en)
 --       by mutual induction, as with the theorems above.         
 
 {--
-If case split both om and on, we cannot get the implicit arguments.
+If case split both "om" and "on", we cannot get the implicit arguments.
 So we try spliting one of implicit arguments and its corresponding variable, which are "m" and "om".
 Then we can get implicit arguments "m" and "n".
 
-The first case is impossible after case split
+The first case is impossible after case split.
 
 The second case:
-Goal: even (suc (m + n)).
-Context: on: odd n, x: even m.
-From goal, we infer that we need something like: suc ? : even (suc (m + n)), ?: odd (m + n)
-To fill the "?" above, we need the rule: o+e≡o on x : odd (n + m) since it is the only function which has an odd ouput.
-Fill "?" above we then get "suc (o+e≡o on x) : even (suc (n + m))", which needs to rewrite "+-comm m n".
+Goal: "even (suc (m + n))".
+Context: "on : odd n", "x : even m".
+From goal, we infer that we need something like: "suc ? : even (suc (m + n)), ?: odd (m + n)"
+The only answer of "?" above is "o+e≡o on x : odd (n + m)", since "o+e≡o" is the only function which has an odd ouput.
+Then the goal becomes: "suc (o+e≡o on x) : even (suc (n + m))", which needs to rewrite by "+-comm m n".
 --}
 o+o≡e : ∀ {m n : ℕ}
   → odd m

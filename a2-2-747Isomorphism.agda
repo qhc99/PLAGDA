@@ -264,17 +264,19 @@ open ≲-Reasoning
 Case split on nothing, we get three cases.
 
 The frist hole: Split null again to avoid complex λ pattern.
-Goal: B
-Context: a≃b : A ≃ B
-See equivalence of "to": to′ : ∀ {A B : Set} → (A ≃′ B) → (A → B), we can infer that "to" transforms "A ≃ B" into 
-a function, which can transform "A" into "B". Since we have "x : A", what we need now is a function "A → B", which 
-is got by "to a≃b". We apply this function to x, then the output is the goal.
+Goal: "B"
+Context: "a≃b : A ≃ B"
+See equivalence of "to": to′ : ∀ {A B : Set} → (A ≃′ B) → (A → B), we can infer that function "to" 
+transforms "A ≃ B" into a function "A →­ B", which can transform "A" into "B". Since we have "x : A", 
+what we need now is a function "A → B", which can be got by "to a≃b". We apply this function
+to x, then the output is the goal.
 
 The second hole: similar idea as the first case.
 
 The third hole: 
-goal: from a≃b (to a≃b x) ≡ x, context "x : A". 
-From the goal and signature of from∘to : ∀ (x : A) → from (to x) ≡ x,
+Goal: " from a≃b (to a≃b x) ≡ x".
+Context: "x : A". 
+From the goal and signature of "from∘to : ∀ (x : A) → from (to x) ≡ x",
 we can infer that we must utilize the rule "from∘to". We guess that third case may have 
 similar structure of first two cases, so we tried "(from∘to a≃b) x" and check its type using C-c C-d.
 Then we find it is exactly the goal.
@@ -297,19 +299,26 @@ record _⇔_ (A B : Set) : Set where
 open _⇔_ -- added
 
 -- This is also an equivalence relation.
+{--
+There is no context, so we case split on null. 
 
+The first case:
+Goal: "A". 
+Context  "x: A", obviously we should fill x in the hole.
+
+The second case is same as the first.
+--}
 ⇔-refl : ∀ {A : Set}
     -----
   → A ⇔ A
-
-to ⇔-refl x = x -- no context, so we case split on null. Then we have goal: A, context  x: A, obviously we should fill x in the hole.
-from ⇔-refl x = x -- same as above case
+to ⇔-refl x = x
+from ⇔-refl x = x 
 
 {--
-Refine on hole, we get the record constructor. 
+Refine on the hole, we get the record constructor. 
 
 Basically we use destructors to fill the second field of input to the first field of output and 
-so does the the second field of output.
+so does the the second field of output symmetrically.
 --}
 ⇔-sym : ∀ {A B : Set}
   → A ⇔ B
@@ -319,13 +328,14 @@ so does the the second field of output.
 
 
 {--
-Wwe case split on null since we do not want induction, because it dose not work in this case.
+Wwe case split on null. Induction is not good here since it dose not work in this case.
 
-The First hole has goal: A → C, which is a function type.
+The First case:
+Goal: "A → C", which is a function type.
 We split on null to extract variable x since we do not prefer lambda function, which excludes "rewrite".
-The goal now is: C
-Since we have context "B⇔C : B ⇔ C", "A⇔B : A ⇔ B", we can get type B → C and A → B by function "to". 
-Connect these two functions, we get the function type A → C. then we input A to convert it to C, which is the goal. 
+The goal now is: "C"
+Since we have context "B⇔C : B ⇔ C", "A⇔B : A ⇔ B", we can get type "B → C" and "A → B" by function "to". 
+Connect these two functions, we get the function type "A → C". then we input A to convert it to C, which is the goal. 
 
 The second case has similar idea.
 --}
@@ -417,21 +427,20 @@ _ = [pos] ([bitsx1] [x0])
 
 -- 747/PLFA exercise: IncCanOne (2 points)
 -- The increment of a canonical number has a leading one.
-
 {--
 The first case:
-Goal: One (bits x1), which is exactly constructor "[bitsx1]"
+Goal: "One (bits x1)", which is exactly constructor "[bitsx1]"
 
 The second case:
 We need to case split on the variable since we have no other information for proving.
-Then the goal is: One ((bits x1) x0), which is a specific number. We just get answer from constructor of One.
+Then the goal is: "One ((bits x1) x0)", which is a specific number. We just get answer from constructor of type One.
 
 The thrid case:
-Goal: One (n x1) and context x : One n, which can be transformed into the goal by appending x1.
+Goal: "One (n x1)" and context "x : One n", which can be transformed into the goal by appending x1.
 
 The fourth case:
-Goal: One (inc n x0) and context x : One n.
-By induction we already have One (inc n), which can be transformed into the goal by appending x0.
+Goal: "One (inc n x0)" and context "x : One n".
+By induction we already have "One (inc n)"", which can be transformed into the goal by appending x0.
 --}
 one-inc : ∀ {n : Bin-ℕ} → Can n → One (inc n)
 one-inc [zero] = [bitsx1]
@@ -443,12 +452,12 @@ one-inc ([pos] (x [x1])) = one-inc ([pos] x) [x0]
 
 -- 747/PLFA exercise: OneInc (1 point)
 {--
-Case split on cn and then case split on x, we then get four cases.
+Case split on "cn" and then case split on "x", we then get four cases.
 
 The first three cases is trivial since they all can be solved by C-c C-a. 
 
 The fourth case: 
-we have goal: Can (inc n x0) and context: x : One n.
+we have goal: "Can (inc n x0)" and context: "x : One n".
 To get "inc n x0", we should first get "inc n" and then append x0.
 The only method to get "inc n" is one-inc, which input is type Can.
 So we use "[pos]" to convert x to type "Can" and then apply "one-inc".
@@ -494,7 +503,6 @@ to-can (suc n) = can-inc (to-can n)
 
 {--
 After case split, all cases are refl.
-Since it is very easy to prove this way, we dose not choose to find simpler solution.
 --}
 dblb-x0 : ∀ {n : Bin-ℕ} → One n → dblb n ≡ n x0
 dblb-x0 [bitsx1] = refl
@@ -521,14 +529,14 @@ to∘dbl (suc m) rewrite to∘dbl m = sym (dblb∘inc (tob m))
 With this helper function we can get the implicit argument "n", which is very very... important. 
 Because we cannot utilize the rule "to∘dbl" without the implicit argument.
 --}
-to∘dbl∘fromb≡dblb∘tob∘fromb : ∀{n : Bin-ℕ} → One n → tob (dbl (fromb n)) ≡ dblb (tob (fromb n))
-to∘dbl∘fromb≡dblb∘tob∘fromb {n} on rewrite to∘dbl (fromb n) = refl
+tob∘dbl∘fromb≡dblb∘tob∘fromb : ∀{n : Bin-ℕ} → One n → tob (dbl (fromb n)) ≡ dblb (tob (fromb n))
+tob∘dbl∘fromb≡dblb∘tob∘fromb {n} on rewrite to∘dbl (fromb n) = refl
 
 {--
 Case split then we find the first case is trivial.
 
-For the second hole, we have goal: tob (dbl (fromb n)) ≡ (n x0), from which we guess that it must utilize the rule of "dblb-x0".
-And by induction we already have "tob (fromb n) ≡ n". 
+For the second hole, we have goal: "tob (dbl (fromb n)) ≡ (n x0)", from which we guess that it must 
+utilize the rule of "dblb-x0". And by induction we already have "tob (fromb n) ≡ n". 
 
 To utilize both two facts above, we should have "tob (dbl (fromb n)) ≡ dblb (tob (fromb n))", which is the 
 helper function above. Then by induction we reduce left term of goal to "dblb n", the goal now becomes 
@@ -539,8 +547,8 @@ The third case has quite similar idea of the second case since it is the suc on 
 
 one-to∘from : ∀ {n : Bin-ℕ} → One n → tob (fromb n) ≡ n
 one-to∘from [bitsx1] = refl
-one-to∘from (on [x0]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
-one-to∘from (on [x1]) rewrite to∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on | dblb-x0 on = refl
+one-to∘from (on [x0]) rewrite tob∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on  = dblb-x0 on 
+one-to∘from (on [x1]) rewrite tob∘dbl∘fromb≡dblb∘tob∘fromb on | one-to∘from on | dblb-x0 on = refl
 
 -- The third property is now an easy corollary.
 
@@ -574,12 +582,12 @@ one-unique (x [x1]) (y [x1]) rewrite one-unique x y = refl
 -- 747/PLFA exercise: CanUnique (1 point)
 -- Proofs of canonicity are unique.
 {--
-Case split both variable because we need knowledge both of variables, then we got two cases.
+Case split both variables because we need knowledge both of variables, then we got two cases.
 
 The first case is trival since its goal is refl.
 
-The second case has goal: "[pos] x ≡ [pos] x₁", where x and x₁ are type "One n".
-So we need the rule "one-unique" because input type of "can-unique" is "Can n".
+The second case has goal: "[pos] x ≡ [pos] x₁", where "x" and "x₁" are type "One n".
+From the goal we infer that we need the rule "one-unique" because input type of "can-unique" is "Can n".
 After rewrite we got refl in the second case.
 --}
 
@@ -606,9 +614,9 @@ record CanR : Set where
 -- This helper will be useful.
 {--
 Case split on null, we got three variables.
-Goal: mk-CanR m x ≡ mk-CanR n y
+Goal: "mk-CanR m x ≡ mk-CanR n y"
 
-Since we have "m ≡ n", by rewrite we eliminate the difference between m and n in the goal. 
+Since we have "x₁ : m ≡ n", by rewrite we eliminate the difference between m and n in the goal. 
 Then goal becomes "mk-CanR lhs x ≡ mk-CanR lhs y".
 
 Since we have had the rule "can-unique", we can eliminate the difference between x and y by rewrite.
@@ -619,7 +627,9 @@ rewrap : ∀ {m n} x y → m ≡ n → mk-CanR m x ≡ mk-CanR n y
 rewrap x y x₁ rewrite x₁ | can-unique x y = refl
 
 -- 747/PLFA exercise: IsoNCanR (2 points)
-
+{--
+Two copy-and-paste function below.
+--}
 from∘inc : ∀ (m : Bin-ℕ) → fromb (inc m) ≡ suc (fromb m)
 from∘inc bits = refl
 from∘inc (m x0) = refl
@@ -633,7 +643,7 @@ from∘tob (suc m) rewrite from∘inc (tob m) | from∘tob m = refl
 Basically, there we need to build projection relation between type CanR and type ℕ.
 Split on null we then get four cases which is required by the definition of ≃.
 
-For the first case, we need build CanR from ℕ, CanR has two fields, which are type Bin-ℕ and type Can.
+For the first case, we need build CanR from ℕ. CanR has two fields, which are type Bin-ℕ and type Can.
 So we just convert ℕ to Bin-ℕ and to Can using "tob" and "to-can" and then use the constructor 
 of Can "mk-CanR" on both converted target. Then we solved this case.
 
@@ -645,9 +655,9 @@ The goal of thrid case is exactly the exercise of 747Induction, so we just copy 
 In the fourth case we use pattern match to split the fields, otherwise it is hard to prove.
 And the goal becomes "mk-CanR (tob (fromb n)) (to-can (fromb n)) ≡ mk-CanR n cpf".
 It is clear now that we should use the helper function "rewrap".
-According to the signature of "rewrap" and the context, we now have the first two arguments of rewrap.
-Now we need only to build the thrid argument, which can be built by function "can-to∘from". 
-Then we got the answer.
+According to the signature of "rewrap" and the context, we can get the first two arguments of rewrap easily.
+Now we need to build the thrid argument of rewrap, which we find it can be built by function "can-to∘from", which is 
+the only function there whose output signature contain "≡". Then we got the answer.
 --}
 
 iso-ℕ-CanR : ℕ ≃ CanR
