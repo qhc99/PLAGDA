@@ -4,7 +4,7 @@ module 747Quantifiers where
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_; z≤n; s≤s) -- added ≤
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _≤_; z≤n; s≤s; _∸_) -- added ≤
 open import Relation.Nullary using (¬_)
 open import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩) -- added proj₂
 open import Data.Sum using (_⊎_; inj₁; inj₂ ) -- added inj₁, inj₂
@@ -76,16 +76,13 @@ open _⇔_
     ∀-distrib-×-from : ((x : A) → B x) × ((x : A) → C x) → (x : A) → B x × C x
     ∀-distrib-×-from ⟨ f1 , f2 ⟩  x₁ = ⟨ f1 x₁ , f2 x₁ ⟩
 
-    {--
-    Refine on the hole get refl.
-    --}
+    --Refine on the hole get refl.
     ∀-distrib-×-from∘to : (x : (x₁ : A) → B x₁ × C x₁) → 
                           (∀-distrib-×-from ∘ ∀-distrib-×-to) x ≡ x
     ∀-distrib-×-from∘to fb×c = refl
 
-    {--
-    Refine on the hole get refl.
-    --}
+    
+    --Refine on the hole get refl.
     ∀-distrib-×-to∘from : (y : ((x : A) → B x) × ((x : A) → C x)) →
                           (∀-distrib-×-to ∘ ∀-distrib-×-from) y ≡ y
     ∀-distrib-×-to∘from f×g = refl
@@ -165,14 +162,56 @@ syntax ∃-syntax (λ x → B) = ∃[ x ] B
 
 ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
-∃-distrib-⊎ = {!!}
+∃-distrib-⊎ {A} {B} {C} = mk-≃ ∃-distrib-⊎-to ∃-distrib-⊎-from ∃-distrib-⊎-from∘to ∃-distrib-⊎-to∘from
+  where
+    {--
+    Case split on input variable. Then case split on variable which contain "_⊎_".
+    The first case:
+    Goal: "∃-syntax B ⊎ ∃-syntax C"
+    We have "x₁ : B x" "x : A" in context, then by constructor of Σ we have "∃-syntax B". By "inj₁" we get the goal.
+    The second case has similar idea.
+    --}
+    ∃-distrib-⊎-to : ∃-syntax (λ x → B x ⊎ C x) → ∃-syntax B ⊎ ∃-syntax C
+    ∃-distrib-⊎-to ⟨ x , inj₁ x₁ ⟩ = inj₁ ⟨ x , x₁ ⟩
+    ∃-distrib-⊎-to ⟨ x , inj₂ y ⟩ = inj₂ ⟨ x , y ⟩
+
+    {--
+    Input type can be case split since it has "_⊎_".
+    Variable which contains "∃-syntax" can also be case split.
+    Then for the first case, we have goal: "∃-syntax (λ x₂ → B x₂ ⊎ C x₂)"
+    and context "x₁ : B x" "x : A". By the definition of Σ, we have "∃-syntax (λ x₂ → B x₂)",
+    to get the goal, we apply "inj₁" to x₁.
+    The second has similar idea.
+    --}
+    ∃-distrib-⊎-from : ∃-syntax B ⊎ ∃-syntax C → ∃-syntax (λ x → B x ⊎ C x)
+    ∃-distrib-⊎-from (inj₁ ⟨ x , x₁ ⟩) = ⟨ x , inj₁ x₁ ⟩
+    ∃-distrib-⊎-from (inj₂ ⟨ x , x₁ ⟩) = ⟨ x , inj₂ x₁ ⟩
+
+    {--
+    Case split on the variable which contains "_⊎_" or "∃-syntax".
+    Then all case are refl by refine.
+    --}
+    ∃-distrib-⊎-from∘to : ∀ (x) →  (∃-distrib-⊎-from ∘ ∃-distrib-⊎-to) x ≡ x
+    ∃-distrib-⊎-from∘to ⟨ x , inj₁ x₁ ⟩ = refl
+    ∃-distrib-⊎-from∘to ⟨ x , inj₂ y ⟩ = refl
+
+    {--
+    Case split on the variable which contains "_⊎_" or "∃-syntax".
+    Then all case are refl by refine.
+    --}
+    ∃-distrib-⊎-to∘from : ∀ (x) →  (∃-distrib-⊎-to ∘ ∃-distrib-⊎-from) x ≡ x
+    ∃-distrib-⊎-to∘from (inj₁ ⟨ x , x₁ ⟩) = refl
+    ∃-distrib-⊎-to∘from (inj₂ ⟨ x , x₁ ⟩) = refl
 
 -- 747/PLFA exercise: ExistsProdImpProdExists (1 point)
 -- Show that existentials distribute over ×.
-
+{--
+Case split on the variable which contains "_⊎_" or "∃-syntax".
+Then by definition of "∃-syntax" and "_×_", we get the building blocks to construct the goal.
+--}
 ∃×-implies-×∃ : ∀ {A : Set} {B C : A → Set} →
   ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
-∃×-implies-×∃ = {!!}
+∃×-implies-×∃ ⟨ x , ⟨ fst , snd ⟩ ⟩ = ⟨ ⟨ x , fst ⟩ , ⟨ x , snd ⟩ ⟩
 
 -- An existential example: revisiting even/odd.
 
@@ -203,14 +242,20 @@ data odd where
 even-∃ : ∀ {n : ℕ} → even n → ∃[ m ] (    m * 2 ≡ n)
 odd-∃  : ∀ {n : ℕ} →  odd n → ∃[ m ] (1 + m * 2 ≡ n)
 
-even-∃ e = {!!}
-odd-∃ e = {!!}
+even-∃ even-zero                       =  ⟨ zero , refl ⟩
+even-∃ (even-suc o) with odd-∃ o
+...                    | ⟨ m , refl ⟩  =  ⟨ suc m , refl ⟩
+
+odd-∃  (odd-suc e)  with even-∃ e
+...                    | ⟨ m , refl ⟩  =  ⟨ m , refl ⟩
 
 ∃-even : ∀ {n : ℕ} → ∃[ m ] (    m * 2 ≡ n) → even n
 ∃-odd  : ∀ {n : ℕ} → ∃[ m ] (1 + m * 2 ≡ n) →  odd n
 
-∃-even e = {!!}
-∃-odd  e = {!!}
+∃-even ⟨  zero , refl ⟩  =  even-zero
+∃-even ⟨ suc m , refl ⟩  =  even-suc (∃-odd ⟨ m , refl ⟩)
+
+∃-odd  ⟨     m , refl ⟩  =  odd-suc (∃-even ⟨ m , refl ⟩)
 
 -- PLFA exercise: what if we write the arithmetic more "naturally"?
 -- (Proof gets harder but is still doable).
@@ -220,7 +265,32 @@ odd-∃ e = {!!}
 -- (Optional exercise: Is this an isomorphism?)
 
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
-∃-≤ = {!!}
+∃-≤ {y} {z} = record { to = ∃-≤-to ; from = ∃-≤-from }
+  where
+    ∃-≤-to : y ≤ z → ∃-syntax (λ x → y + x ≡ z)
+    ∃-≤-to y≤z = ⟨ z ∸ y , to-y+x≡z y≤z ⟩
+      where
+        to-y+x≡z : y ≤ z → y + (z ∸ y) ≡ z
+        to-y+x≡z z≤n = refl
+        to-y+x≡z (s≤s y≤z) = Eq.cong suc {!   !}
+
+    ∃-≤-from : ∃-syntax (λ x → y + x ≡ z) → y ≤ z
+    ∃-≤-from ⟨ x , x₁ ⟩ = y+x≡z→y≤z x₁
+      where
+        {--
+        Case split on input variable, we need a helper function in the nested "where".
+        --}
+        y+x≡z→y≤z : ∀ {x y z : ℕ} →  y + x ≡ z → y ≤ z
+        y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
+          where
+            {--
+            Case split both variable, then all case can be solved by C-c C-a. 
+            --}
+            y≤y+x : ∀ {x y : ℕ} → y ≤ y + x
+            y≤y+x {zero} {zero} = z≤n
+            y≤y+x {zero} {suc y} = s≤s y≤y+x
+            y≤y+x {suc x} {zero} = z≤n
+            y≤y+x {suc x} {suc y} = s≤s y≤y+x
 
 -- The negation of an existential is isomorphic to a universal of a negation.
 

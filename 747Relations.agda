@@ -251,18 +251,14 @@ data Trichotomy (m n : ℕ) : Set where
   is-≡ : m ≡ n → Trichotomy m n
   is-> : n < m → Trichotomy m n
 
--- Trivial helper function.
-m≡n→suc-m≡suc-n : ∀ {m n : ℕ} → m ≡ n → suc m ≡ suc n
-m≡n→suc-m≡suc-n refl = refl
-
 {--
 In the first case, we have "m < n" in context, by constructor "s<s" we can get suc m < suc n, which is similar to the thrid case.
 
-In the second case, we need the rule "m ≡ n → suc m ≡ suc n", so we set the helper function above, which is quite easy to prove.
+In the second case, we need the rule "m ≡ n → suc m ≡ suc n", which can be built by "cong suc" from "m ≡ n".
 --}
 suc-<-trichotomy : ∀ {m n : ℕ} → Trichotomy m n → Trichotomy (suc m) (suc n)
 suc-<-trichotomy (is-< x) = is-< (s<s x)
-suc-<-trichotomy (is-≡ x) = is-≡ (m≡n→suc-m≡suc-n x)
+suc-<-trichotomy (is-≡ x) = is-≡ (cong suc x)
 suc-<-trichotomy (is-> x) = is-> (s<s x)
 
 {--
