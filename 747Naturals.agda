@@ -2,7 +2,7 @@
 Assignment1 Naturals of Qinghao Chen
 --}
 
-module a1-1-747Naturals where
+module 747Naturals where
 
 -- This is a comment.
 

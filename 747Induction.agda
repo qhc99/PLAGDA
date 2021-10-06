@@ -1,4 +1,4 @@
-module a1-2-747Induction where
+module 747Induction where
 
 -- Library
 

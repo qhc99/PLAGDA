@@ -1,4 +1,4 @@
-module a2-1-747Relations where
+module 747Relations where
 
 -- Library
 

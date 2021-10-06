@@ -8,6 +8,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Product using (_×_; proj₁; proj₂)
 
+
 -- Negation is defined as implying false.
 
 ¬_ : Set → Set
@@ -121,7 +122,7 @@ Case split on null, then case split on variable consecutively until it is absurd
 -- < is irreflexive (never reflexive).
 {--
 Case split both on n and x.
-By induction, we input "¬n<n n" and refine, find its context is: "x : n < n" and goal n < n, then we got the answer.
+By induction, we input "¬n<n n" and refine, find its context is: "x : n < n" and goal "n < n", then we got the answer.
 --}
 ¬n<n : ∀ (n : ℕ) → ¬ n < n
 ¬n<n zero ()
@@ -170,8 +171,59 @@ With the experience of trichotomy exercise before, we set suc-<-trichotomy helpe
 -- Expand negation as implies-false, then look in 747Relations
 -- for a law of which this is a special case.
 
+open import plfa.part1.Isomorphism using (_≃_)
+{--
+The "to" case: case split on null then refine, we get two holes seperated by the "," operator of the long module name.
+Two goals of two holes are function type. Refine the first hole, we get goal "⊥" and context "x₁ : A" "x : ¬ (A ⊎ B)",
+then by "inj₁" we have "A ⊎ B", then apply "x" to the result we get the goal. The second hole has similar idea.
+
+
+Refine the "from" case, we have context "x : ¬ A × ¬ B" "x₁ : A ⊎ B" and goal "⊥", by "proj" we have "¬ A" and "¬ B"
+from "x", which can be written as "A → ⊥" and "B → ⊥". These are the first two argument of "case-⊎", and "x₁" is 
+the third argument, output is exactly the goal, then we get the answer.
+
+In the "from∘to" case, "x" is a function. The goal is equality on function, so we need extensionality. After refine,
+the goal is a function, so we refine again to get a lambda expression. The input of this lambda expression is type ⊎,
+which needs case split. There we should use pattern matching of lambda to replace case split. After pattern matching, 
+all cases here become refl.
+
+"to∘from" case: case split on null then case split on the only variable, the goal is refl by C-c C-a. 
+--}
+
+open import plfa.part1.Isomorphism using (_∘_)
+
+{--
+
+--}
+case-⊎ : ∀ {A B C : Set}
+  → (A → C)
+  → (B → C)
+  → A ⊎ B
+    -----------
+  → C
+case-⊎ f g (inj₁ x) = f x
+case-⊎ f g (inj₂ x) = g x
+
+⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
+⊎-dual-× {A} {B} = record { to = ⊎-dual-×-to ; from = ⊎-dual-×-from ; from∘to = λ x → ⊎-dual-×-from∘to ; to∘from = λ y → ⊎-dual-×-to∘from }
+  where
+    ⊎-dual-×-to : ¬ (A ⊎ B) → ¬ A × ¬ B
+    ⊎-dual-×-to x = (λ x₁ → x (inj₁ x₁)) Data.Product., λ x₁ → x (inj₂ x₁)
+
+    ⊎-dual-×-from : ¬ A × ¬ B → ¬ (A ⊎ B)
+    ⊎-dual-×-from  = λ x x₁ → case-⊎ (proj₁ x) (proj₂ x) x₁
+
+    ⊎-dual-×-from∘to : ∀ {x} → (⊎-dual-×-from ∘ ⊎-dual-×-to) x ≡ x
+    ⊎-dual-×-from∘to {x} = extensionality λ { (inj₁ y) → refl
+                                            ; (inj₂ y) → refl
+                                            }
+
+    ⊎-dual-×-to∘from : ∀ {y} → ⊎-dual-×-to (⊎-dual-×-from y) ≡ y
+    ⊎-dual-×-to∘from {fst Data.Product., snd} = refl
+
 -- What about ¬ (A × B) ≃ (¬ A) ⊎ (¬ B)?
 -- Answer: RHS implies LHS but converse cannot be proved in intuitionistic logic.
+
 
 -- Intuitionistic vs classical logic.
 

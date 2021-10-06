@@ -1,4 +1,4 @@
-module a2-2-747Isomorphism where
+module 747Isomorphism where
 
 -- Library
 
