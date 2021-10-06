@@ -126,7 +126,7 @@ to∘from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = refl
 -- Show A ⇔ B is isomorphic to (A → B) × (B → A).
 {-- 
 First case: 
-Case split on null, then case split on variable x, we have goal "(A → B) × (B → A)", and context "to : A → B" and "from : B → A",
+Case split on null, then case split on variable "x", we have goal "(A → B) × (B → A)", and context "to : A → B" and "from : B → A",
 Then we just construct the goal using operator "⟨_,_⟩".
 
 Second case:
@@ -228,7 +228,7 @@ infix 1 _⊎_
 -- 747/PLFA exercise: SumCommIso (1 point)
 -- Sum is commutative up to isomorphism.
 {--
-Case split on every possible variable until it is dose not contain "⊍".
+Case split on every possible variable until it is dose not contain "⊎".
 Then from context the goal is very easy to prove.
 --}
 ⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
@@ -245,10 +245,10 @@ to∘from ⊎-comm (inj₂ x) = refl
 -- 747/PLFA exercise: SumAssocIso (1 point)
 -- Sum is associative up to isomorphism.
 {--
-We case split until variable not contain "⊍".
+We case split until variable not contain "⊎".
 
 "to" and "from" of isomorphism are solved using inj according to the variable's position in the goal, basically if 
-the variable appear in the first term of "⊍" in the goal, we use inj₁. Otherwise we use inj₂.
+the variable appear in the first term of "⊎" in the goal, we use "inj₁". Otherwise we use "inj₂".
 
 "to∘from" and "from∘to" of isomorphism become refl when split to ends.
 --}
@@ -396,7 +396,7 @@ _≲_.from∘to ⊎-distrib-× (inj₂ x) = refl
 
 -- PLFA exercise: a weak distributive law.
 {--
-The first case, we have "A" and "C", then using inj₁ on "A", we get "A ⊎ (B × C)".
+The first case, we have "A" and "C", then using "inj₁" on "A", we get "A ⊎ (B × C)".
 The second case, we have "B" and "C", then we have "B × C" and finally the goal by inj₂.
 --}
 ⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
@@ -409,6 +409,7 @@ The second case, we have "B" and "C", then we have "B × C" and finally the goal
 {--
 Case split and pattern matching, then reconstruct according to context and variable position, which 
 is used to determine which injunction to use.
+
 In the first case, we have "A × B", which means "A" and "B". Then we can get "A ⊎ C" by inj₁ and "B ⊍ D" similarly.
 The second case has same idea.
 --}

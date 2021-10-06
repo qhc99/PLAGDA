@@ -192,9 +192,6 @@ all cases here become refl.
 
 open import plfa.part1.Isomorphism using (_∘_)
 
-{--
-
---}
 case-⊎ : ∀ {A B C : Set}
   → (A → C)
   → (B → C)
@@ -205,7 +202,7 @@ case-⊎ f g (inj₁ x) = f x
 case-⊎ f g (inj₂ x) = g x
 
 ⊎-dual-× : ∀ {A B : Set} → ¬ (A ⊎ B) ≃ (¬ A) × (¬ B)
-⊎-dual-× {A} {B} = record { to = ⊎-dual-×-to ; from = ⊎-dual-×-from ; from∘to = λ x → ⊎-dual-×-from∘to ; to∘from = λ y → ⊎-dual-×-to∘from }
+⊎-dual-× {A} {B} = record { to = ⊎-dual-×-to ; from = ⊎-dual-×-from ; from∘to = ⊎-dual-×-from∘to ; to∘from = ⊎-dual-×-to∘from}
   where
     ⊎-dual-×-to : ¬ (A ⊎ B) → ¬ A × ¬ B
     ⊎-dual-×-to x = (λ x₁ → x (inj₁ x₁)) Data.Product., λ x₁ → x (inj₂ x₁)
@@ -213,13 +210,13 @@ case-⊎ f g (inj₂ x) = g x
     ⊎-dual-×-from : ¬ A × ¬ B → ¬ (A ⊎ B)
     ⊎-dual-×-from  = λ x x₁ → case-⊎ (proj₁ x) (proj₂ x) x₁
 
-    ⊎-dual-×-from∘to : ∀ {x} → (⊎-dual-×-from ∘ ⊎-dual-×-to) x ≡ x
-    ⊎-dual-×-from∘to {x} = extensionality λ { (inj₁ y) → refl
+    ⊎-dual-×-from∘to : ∀ (x : ¬ (A ⊎ B)) → (⊎-dual-×-from ∘ ⊎-dual-×-to) x ≡ x
+    ⊎-dual-×-from∘to x = extensionality λ { (inj₁ y) → refl
                                             ; (inj₂ y) → refl
                                             }
 
-    ⊎-dual-×-to∘from : ∀ {y} → ⊎-dual-×-to (⊎-dual-×-from y) ≡ y
-    ⊎-dual-×-to∘from {fst Data.Product., snd} = refl
+    ⊎-dual-×-to∘from : ∀ (y : ¬ A × ¬ B) → ⊎-dual-×-to (⊎-dual-×-from y) ≡ y
+    ⊎-dual-×-to∘from (fst Data.Product., snd) = refl
 
 -- What about ¬ (A × B) ≃ (¬ A) ⊎ (¬ B)?
 -- Answer: RHS implies LHS but converse cannot be proved in intuitionistic logic.
