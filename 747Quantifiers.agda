@@ -267,12 +267,20 @@ odd-∃  (odd-suc e)  with even-∃ e
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
 ∃-≤ {y} {z} = record { to = ∃-≤-to ; from = ∃-≤-from }
   where
+    {--
+    Refine on the hole. Then we get the goal "y = ?0 ≡ z" in the second hole, so we need to fill "z ∸ y" in the first hole
+    since we do not have "_-_" operator in the unary notation.
+    --}
     ∃-≤-to : y ≤ z → ∃-syntax (λ x → y + x ≡ z)
     ∃-≤-to y≤z = ⟨ z ∸ y , to-y+x≡z y≤z ⟩
       where
-        to-y+x≡z : y ≤ z → y + (z ∸ y) ≡ z
+        {--
+        This rule we need "∀ {y z : ℕ}" in the signature, while "∃-≤-to" does not.
+        Case split on input variable, the first case is trivial and the second case is "suc" on the both terms of induction rule.
+        --}
+        to-y+x≡z : ∀ {y z : ℕ} →  y ≤ z → y + (z ∸ y) ≡ z
         to-y+x≡z z≤n = refl
-        to-y+x≡z (s≤s y≤z) = Eq.cong suc {!   !}
+        to-y+x≡z (s≤s y≤z) = Eq.cong suc (to-y+x≡z y≤z)
 
     ∃-≤-from : ∃-syntax (λ x → y + x ≡ z) → y ≤ z
     ∃-≤-from ⟨ x , x₁ ⟩ = y+x≡z→y≤z x₁
@@ -284,7 +292,7 @@ odd-∃  (odd-suc e)  with even-∃ e
         y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
           where
             {--
-            Case split both variable, then all case can be solved by C-c C-a. 
+            Case split both variable, then all cases can be solved by C-c C-a. 
             --}
             y≤y+x : ∀ {x y : ℕ} → y ≤ y + x
             y≤y+x {zero} {zero} = z≤n
@@ -296,16 +304,25 @@ odd-∃  (odd-suc e)  with even-∃ e
 
 ¬∃≃∀¬ : ∀ {A : Set} {B : A → Set}
   → (¬ ∃[ x ] B x) ≃ ∀ x → ¬ B x
-¬∃≃∀¬ = {!!}
+¬∃≃∀¬ =
+  record
+    { to      =  λ{ ¬∃xy x y → ¬∃xy ⟨ x , y ⟩ }
+    ; from    =  λ{ ∀¬xy ⟨ x , y ⟩ → ∀¬xy x y }
+    ; from∘to =  λ{ ¬∃xy → extensionality λ{ ⟨ x , y ⟩ → refl } }
+    ; to∘from =  λ{ ∀¬xy → refl }
+    }
 
 -- 747/PLFA exercise: ExistsNegImpNegForAll (1 point)
 -- Existence of negation implies negation of universal.
-
+{--
+Case split input variable according to its splitable type.
+Then the hold can be solved by C-c C-a.
+--}
 ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
   → ∃[ x ] (¬ B x)
     --------------
   → ¬ (∀ x → B x)
-∃¬-implies-¬∀ ∃¬B = {!!}
+∃¬-implies-¬∀ ⟨ x , x₁ ⟩ = λ z → x₁ (z x)
 
 -- The converse cannot be proved in intuitionistic logic.
 
