@@ -328,20 +328,31 @@ true iff false = false
 false iff true = false
 false iff false = true
 
+{--
+Case split variables which contain "Dec" seems not feasible in this case, as 
+we have no evidence in the fourth case to get the "⊥", which is the goal.
+Since we have "_→-dec_" at hand and we know that "_⇔_" is built by two direction of  "_→_".
+So we tried a helper function below which get the result "_⇔_" in the pure "Dec" world from its signature. 
+And we find its four cases can be solved by C-c C-a.
+--}
 _⇔-dec_ : ∀ {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
-yes x ⇔-dec yes x₁ = yes (record { to = λ _ → x₁ ; from = λ _ → x })
-yes x ⇔-dec no x₁ = no (λ z → x₁ (to z x))
-no x ⇔-dec yes x₁ = no (λ z → x (from z x₁))
-no x ⇔-dec no x₁ = no {!  !}
-  where 
-    ¬A¬B→¬A⇔B : ∀ {A B : Set} → ¬ A → ¬ B → ¬ (A ⇔ B)
-    ¬A¬B→¬A⇔B ¬a ¬b record { to = to ; from = from } = {!  !}
+da ⇔-dec db = mk-⇔-in-dec (da →-dec db) (db →-dec da)
+  where
+  mk-⇔-in-dec : ∀{A B : Set} → Dec (A → B) → Dec(B → A) → Dec(A ⇔ B)
+  mk-⇔-in-dec (yes x) (yes x₁) = yes (record { to = x ; from = x₁ })
+  mk-⇔-in-dec (yes x) (no x₁) = no (λ z → x₁ (from z))
+  mk-⇔-in-dec (no x) (yes x₁) = no (λ z → x (to z))
+  mk-⇔-in-dec (no x) (no x₁) = no (λ z → x₁ (from z)) 
 
+
+{--
+Since we have found the good proving of "_⇔-dec_", all four cases becomes refl after case split.
+--}
 iff-⇔ : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋ 
 iff-⇔ (yes x) (yes x₁) = refl
 iff-⇔ (yes x) (no x₁) = refl
 iff-⇔ (no x) (yes x₁) = refl
-iff-⇔ (no x) (no x₁) = {!   !}
+iff-⇔ (no x) (no x₁) = refl
 
 -- Proof by reflection.
 -- Or, getting Agda to construct proofs at compile time.
