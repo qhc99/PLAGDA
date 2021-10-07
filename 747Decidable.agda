@@ -127,22 +127,42 @@ _ = refl
 -- 747/PLFA exercise: DecLT (3 point)
 -- Decidable strict equality.
 -- You will need these helper functions as we did above.
-
+{--
+Case split on null, then case split on the variable. The result becomes "()".
+--}
 ¬z<z : ¬ (zero < zero)
-¬z<z = {!!}
+¬z<z ()
 
+{--
+Case split on null, then case split on type "suc m < suc n", then answer becomes obvious.
+--}
 ¬s<s : ∀ {m n : ℕ} → ¬ (m < n) → ¬ (suc m < suc n)
-¬s<s = {!!}
+¬s<s x (s<s x₁) = x x₁
 
+{--
+Similar idea with function "¬z<z".
+--}
 ¬s<z : ∀ {n : ℕ} → ¬ (suc n < zero)
-¬s<z = {!!}
+¬s<z ()
 
+{--
+Case split both on "m" and "n".
+Although the first and the third case can be solved by C-c C-a, tests will not pass in this way.
+We have hint of the three helper function and "_≤?_ ".
+Thus we should solve the first and thrid case with the helper function.
+For the fourth case, we copy the structure of the fourth case of "_≤?_" and add holes to the output.
+Then the fourth case becomes easy to solve by context and hint.
+--}
 _<?_ : ∀ (m n : ℕ) → Dec (m < n)
-m <? n = {!!}
+zero <? zero = no (¬z<z)
+zero <? suc n = yes z<s
+suc m <? zero = no (¬s<z)
+suc m <? suc n with m <? n
+... | yes x = yes (s<s x)
+... | no x = no (λ x₁ → (¬s<s x)  x₁)
 
 -- Some tests.
 
-{--
 _ : 2 <? 4 ≡ yes (s<s (s<s (z<s)))
 _ = refl
 
@@ -151,13 +171,26 @@ _ = refl
 
 _ : 3 <? 3 ≡ no (¬s<s (¬s<s (¬s<s ¬z<z)))
 _ = refl
---}
+
 
 -- 747/PLFA exercise: DecNatEq (3 points)
 -- Decidable equality for natural numbers.
-
+{--
+The first three cases are trivial since they can be solved by C-c C-a.
+For the fourth case, by the hint of previous exercise, we need to know the construct of "Dec (m ≡ n)" before induction.
+So here we use the with clause as before and add holes. The first hole can be solved by C-c C-a too, while for the 
+second hole we need the rule "¬ (suc m) ≡ (suc n)", which is built by the nested helper function.
+--}
 _≡ℕ?_ : ∀ (m n : ℕ) → Dec (m ≡ n) -- split m,n
-m ≡ℕ? n = {!!}
+zero ≡ℕ? zero = yes refl
+zero ≡ℕ? suc n = no λ ()
+suc m ≡ℕ? zero = no λ ()
+suc m ≡ℕ? suc n with m ≡ℕ? n
+... | yes refl = yes refl
+... | no x = no (suc-¬-≡ x)
+  where
+    suc-¬-≡ : ∀ {m n : ℕ} → ¬ m ≡ n → ¬ (suc m) ≡ (suc n)
+    suc-¬-≡ x refl = x refl
 
 -- Reusing ≤ᵇ and proofs of equivalence with ≤ to decide ≤.
 
@@ -267,15 +300,25 @@ no x →-dec y = yes λ a → ⊥-elim (x a)
 
 -- 747/PLFA exercise: ErasBoolDec (3 points)
 -- Erasure relates boolean and decidable operations.
-
+{--
+Case split type "Dec" since it can be built by "yes" or "no".
+Then all cases below becomes refl.
+--}
 ∧-× : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ ∧ ⌊ y ⌋ ≡ ⌊ x ×-dec y ⌋
-∧-× da db = {!!}
+∧-× (yes x) (yes x₁) = refl
+∧-× (yes x) (no x₁) = refl
+∧-× (no x) (yes x₁) = refl
+∧-× (no x) (no x₁) = refl
 
 ∨-× : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ ∨ ⌊ y ⌋ ≡ ⌊ x ⊎-dec y ⌋
-∨-× da db = {!!}
+∨-× (yes x) (yes x₁) = refl
+∨-× (yes x) (no x₁) = refl
+∨-× (no x) (yes x₁) = refl
+∨-× (no x) (no x₁) = refl
 
 not-¬ : ∀ {A : Set} (x : Dec A) → not ⌊ x ⌋ ≡ ⌊ ¬? x ⌋
-not-¬ da = {!!}
+not-¬ (yes x) = refl
+not-¬ (no x) = refl
 
 -- 747/PLFA exercise: iff-erasure.
 
@@ -286,10 +329,19 @@ false iff true = false
 false iff false = true
 
 _⇔-dec_ : ∀ {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
-da ⇔-dec db = {!!}
+yes x ⇔-dec yes x₁ = yes (record { to = λ _ → x₁ ; from = λ _ → x })
+yes x ⇔-dec no x₁ = no (λ z → x₁ (to z x))
+no x ⇔-dec yes x₁ = no (λ z → x (from z x₁))
+no x ⇔-dec no x₁ = no {!  !}
+  where 
+    ¬A¬B→¬A⇔B : ∀ {A B : Set} → ¬ A → ¬ B → ¬ (A ⇔ B)
+    ¬A¬B→¬A⇔B ¬a ¬b record { to = to ; from = from } = {!  !}
 
 iff-⇔ : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋ 
-iff-⇔ da db = {!!}
+iff-⇔ (yes x) (yes x₁) = refl
+iff-⇔ (yes x) (no x₁) = refl
+iff-⇔ (no x) (yes x₁) = refl
+iff-⇔ (no x) (no x₁) = {!   !}
 
 -- Proof by reflection.
 -- Or, getting Agda to construct proofs at compile time.

@@ -264,41 +264,41 @@ odd-∃  (odd-suc e)  with even-∃ e
 -- An alternate definition of y ≤ z.
 -- (Optional exercise: Is this an isomorphism?)
 
+{--
+This rule we need "∀ {y z : ℕ}" in the signature, while "∃-≤-to" does not.
+Case split on input variable, the first case is trivial and the second case is "suc" on the both terms of induction rule.
+--}
+to-y+x≡z : ∀ {y z : ℕ} →  y ≤ z → y + (z ∸ y) ≡ z
+to-y+x≡z z≤n = refl
+to-y+x≡z (s≤s y≤z) = Eq.cong suc (to-y+x≡z y≤z)
+
+{--
+Case split on input variable, we need a helper function in the nested "where".
+--}
+y+x≡z→y≤z : ∀ {x y z : ℕ} →  y + x ≡ z → y ≤ z
+y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
+  where
+  {--
+  Case split both variable, then all cases can be solved by C-c C-a. 
+  --}
+  y≤y+x : ∀ {x y : ℕ} → y ≤ y + x
+  y≤y+x {zero} {zero} = z≤n
+  y≤y+x {zero} {suc y} = s≤s y≤y+x
+  y≤y+x {suc x} {zero} = z≤n
+  y≤y+x {suc x} {suc y} = s≤s y≤y+x
+
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
 ∃-≤ {y} {z} = record { to = ∃-≤-to ; from = ∃-≤-from }
   where
-    {--
-    Refine on the hole. Then we get the goal "y = ?0 ≡ z" in the second hole, so we need to fill "z ∸ y" in the first hole
-    since we do not have "_-_" operator in the unary notation.
-    --}
-    ∃-≤-to : y ≤ z → ∃-syntax (λ x → y + x ≡ z)
-    ∃-≤-to y≤z = ⟨ z ∸ y , to-y+x≡z y≤z ⟩
-      where
-        {--
-        This rule we need "∀ {y z : ℕ}" in the signature, while "∃-≤-to" does not.
-        Case split on input variable, the first case is trivial and the second case is "suc" on the both terms of induction rule.
-        --}
-        to-y+x≡z : ∀ {y z : ℕ} →  y ≤ z → y + (z ∸ y) ≡ z
-        to-y+x≡z z≤n = refl
-        to-y+x≡z (s≤s y≤z) = Eq.cong suc (to-y+x≡z y≤z)
+  {--
+  Refine on the hole. Then we get the goal "y = ?0 ≡ z" in the second hole, so we need to fill "z ∸ y" in the first hole
+  since we do not have "_-_" operator in the unary notation.
+  --}
+  ∃-≤-to : y ≤ z → ∃-syntax (λ x → y + x ≡ z)
+  ∃-≤-to y≤z = ⟨ z ∸ y , to-y+x≡z y≤z ⟩
 
-    ∃-≤-from : ∃-syntax (λ x → y + x ≡ z) → y ≤ z
-    ∃-≤-from ⟨ x , x₁ ⟩ = y+x≡z→y≤z x₁
-      where
-        {--
-        Case split on input variable, we need a helper function in the nested "where".
-        --}
-        y+x≡z→y≤z : ∀ {x y z : ℕ} →  y + x ≡ z → y ≤ z
-        y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
-          where
-            {--
-            Case split both variable, then all cases can be solved by C-c C-a. 
-            --}
-            y≤y+x : ∀ {x y : ℕ} → y ≤ y + x
-            y≤y+x {zero} {zero} = z≤n
-            y≤y+x {zero} {suc y} = s≤s y≤y+x
-            y≤y+x {suc x} {zero} = z≤n
-            y≤y+x {suc x} {suc y} = s≤s y≤y+x
+  ∃-≤-from : ∃-syntax (λ x → y + x ≡ z) → y ≤ z
+  ∃-≤-from ⟨ x , x₁ ⟩ = y+x≡z→y≤z x₁
 
 -- The negation of an existential is isomorphic to a universal of a negation.
 
