@@ -139,8 +139,7 @@ data Trichotomy (m n : ℕ) : Set where
   is-> : n < m → ¬ m ≡ n → ¬ m < n → Trichotomy m n
 
 {-
-Three Copy-and-pasted helper function from previous exercise.
-Import seems not work for files reside in the same directroy...
+Three trivial helper function.
 -}
 suc-¬-< : ∀ {m n : ℕ} → ¬ m < n → ¬ (suc m) < (suc n)
 suc-¬-< x (s<s x₁) = x x₁

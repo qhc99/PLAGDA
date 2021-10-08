@@ -55,7 +55,12 @@ Refine on the hole to get "mk-≃" and fill four fields by the nested helper fun
 -}
 ∀-distrib-× : ∀ {A : Set} {B C : A → Set} →
   (∀ (x : A) → B x × C x) ≃ (∀ (x : A) → B x) × (∀ (x : A) → C x)
-∀-distrib-× {A} {B} {C} = mk-≃ ∀-distrib-×-to ∀-distrib-×-from ∀-distrib-×-from∘to ∀-distrib-×-to∘from
+∀-distrib-× {A} {B} {C} = 
+  mk-≃ 
+    ∀-distrib-×-to 
+    ∀-distrib-×-from 
+    ∀-distrib-×-from∘to 
+    ∀-distrib-×-to∘from
   where
     {-
     Refine two times to pattern match lambda and operator "_×_".
@@ -163,7 +168,12 @@ syntax ∃-syntax (λ x → B) = ∃[ x ] B
 
 ∃-distrib-⊎ : ∀ {A : Set} {B C : A → Set} →
   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
-∃-distrib-⊎ {A} {B} {C} = mk-≃ ∃-distrib-⊎-to ∃-distrib-⊎-from ∃-distrib-⊎-from∘to ∃-distrib-⊎-to∘from
+∃-distrib-⊎ {A} {B} {C} = 
+  mk-≃ 
+    ∃-distrib-⊎-to 
+    ∃-distrib-⊎-from 
+    ∃-distrib-⊎-from∘to 
+    ∃-distrib-⊎-to∘from
   where
     {-
     Case split on input variable. Then case split on variables which contain "_⊎_".

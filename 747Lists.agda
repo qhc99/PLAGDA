@@ -158,7 +158,6 @@ reverse-++-commute (x ∷ xs) (x₁ ∷ ys)
 -- 747/PLFA exercise: RevInvol (1 point)
 -- Reverse is its own inverse.
 -- Changed from PLFA to make xs explicit.
-
 {--
 Case split on variable, we get the first case refl.
 For the second case, the goal is "reverse (reverse xs ++ [ x ]) ≡ x ∷ xs".
@@ -222,7 +221,6 @@ _ = refl
 -- 747/PLFA exercise: MapCompose (1 point)
 -- The map of a composition is the composition of maps.
 -- Changed from PLFA: some arguments made explicit, uses pointwise equality.
-
 {--
 Only xs in this case is splitable.
 The first case is trivially refl after split.
@@ -286,10 +284,18 @@ _ = refl
 
 -- PLFA exercise: use foldr to define product on lists of naturals
 
+List-Π : ∀ (xs : List ℕ) → ℕ
+List-Π xs = foldr _*_ 1 xs
+
+_ : (List-Π [ 1 , 2 , 3 , 4 ]) ≡ 24
+_ = refl
+
+_ : (List-Π [ 2021 ]) ≡ 2021
+_ = refl
+
 -- 747/PLFA exercise: FoldrOverAppend (1 point)
 -- Show that foldr over an append can be expressed as
 -- foldrs over each list.
-
 {--
 Case split both lists.
 The first two cases are trivial since they are refl.
@@ -315,23 +321,40 @@ map-is-foldr f [] = refl
 map-is-foldr f (x ∷ xs) rewrite map-is-foldr f xs = refl
 
 -- PLFA exercise: write a fold for trees
-
--- fold-Tree : ∀ {A B C : Set}
---   → (A → C) → (C → B → C → C) → Tree A B → C
--- fold-Tree f g t = {!!}
+{-
+Recursive in the second case and end in the first case. Then reduce back to the root of the tree.
+-}
+fold-Tree : ∀ {A B C : Set}
+   → (A → C) → (C → B → C → C) → Tree A B → C
+fold-Tree f g (leaf x) = f x
+fold-Tree f g (node t x t₁) = g (fold-Tree f g t) x (fold-Tree f g t₁)
 
 -- PLFA exercise: the downFrom function computes a countdown list
 -- Prove an equality about its sum
 
+{-
 downFrom : ℕ → List ℕ
 downFrom zero     =  []
 downFrom (suc n)  =  n ∷ downFrom n
 _ : downFrom 3 ≡ [ 2 , 1 , 0 ]
 _ = refl
 
--- sum-downFrom : ∀ (n : ℕ)
---   → sum (downFrom n) * 2 ≡ n * (n ∸ 1)
--- sum-downFrom n = {!!}
+sum-∷ : ∀ (x : ℕ) → (xs : List ℕ) → sum (x ∷ xs) ≡ x + sum xs
+sum-∷ x [] = refl
+sum-∷ x (x₁ ∷ xs) = refl
+
+open import 747Induction using (*-+-rdistrib)
+
+sum-downFrom : ∀ (n : ℕ)
+  → sum (downFrom n) * 2 ≡ n * (n ∸ 1)
+sum-downFrom zero = refl
+sum-downFrom (suc n) 
+  rewrite 
+  sum-∷ n (downFrom n) | 
+  *-+-rdistrib n (sum (downFrom n)) 2 | 
+  sum-downFrom n = {!   !}
+-}
+
 
 -- 'Monoid' is a mathematical term for a set with an associative operator
 -- and an element which is the left and right identity (eg lists).
@@ -407,8 +430,15 @@ foldl _⊗_ e (x ∷ xs) = foldl _⊗_ (e ⊗ x) xs
 -- Show that foldr and foldl compute the same value on a monoid
 -- when the base case is the identity.
 -- Hint: write a helper function for when the base case of foldl is an arbitrary value.
-
-
+{-
+The first case is symmetry version of "foldr-monoid" of the first case.
+For the second case, we have sequence of rewrite below.
+Goal at the start:                                "foldl _⊗_ (y ⊗ x) xs ≡ (y ⊗ foldl _⊗_ (id ⊗ x) xs)"
+After rewrite "foldl-monoid xs (y ⊗ x)": "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ foldl _⊗_ x xs)"
+After rewrite "identityˡ x":              "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ foldl _⊗_ (id ⊗ x) xs)"
+After rewrite "foldl-monoid xs x":        "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ (x ⊗ foldl _⊗_ id xs))"
+Then the goal becomes "assoc y x (foldl _⊗_ id xs)".
+-}
 foldl-monoid : ∀ {A : Set} → {{m : IsMonoid A}} →
   ∀ (xs : List A) (y : A) → foldl _⊗_ y xs ≡ y ⊗ (foldl _⊗_ id xs)
 foldl-monoid [] y = sym (identityʳ y)
@@ -417,13 +447,15 @@ foldl-monoid {A} {{m}} (x ∷ xs) y
     foldl-monoid xs (y ⊗ x) | 
     identityˡ x | 
     foldl-monoid xs x = assoc y x (foldl _⊗_ id xs)
--- "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ foldl _⊗_ (id ⊗ x) xs)"
--- "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ foldl _⊗_ x xs)"
--- "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ (x ⊗ foldl _⊗_ id xs))"
--- "(y ⊗ (x ⊗ foldl _⊗_ id xs)) ≡ (y ⊗ (x ⊗ foldl _⊗_ id xs))"
 
 {--
-
+Case split on "List" type variable.
+The first case is trivial.
+For the second case, we show transformation below:
+Goal at the start:                    "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldr _⊗_ id xs)"
+After rewrite "sym (foldl-r-mon xs)": "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldl _⊗_ id xs)"
+After rewrite "identityˡ x":                  "foldl _⊗_ x xs ≡ (x ⊗ foldl _⊗_ id xs)".
+Then goal becomes "foldl-monoid xs x"
 --}
 foldl-r-mon : ∀ {A : Set} → {{m : IsMonoid A}} →
   ∀ (xs : List A) → foldl _⊗_ id xs ≡ foldr _⊗_ id xs
@@ -432,9 +464,6 @@ foldl-r-mon {A} {{m}} (x ∷ xs)
   rewrite 
     sym (foldl-r-mon xs) | 
     identityˡ x  = foldl-monoid xs x
---"foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldr _⊗_ id xs)"
---"foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldl _⊗_ id xs)"
---"foldl _⊗_ x xs ≡ (x ⊗ foldl _⊗_ id xs)"
 
 
 -- Inductively-defined predicates over lists
@@ -489,14 +518,18 @@ from (All-++-⇔ (x ∷ xs) ys) ⟨ px ∷ apxs , apys ⟩
 -- PLFA exercise: state and prove Any-++-⇔, and use it to demonstrate
 -- an equivalence relating ∈ and _++_.
 
+{-
 Any-++-⇔ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
   Any P (xs ++ ys) ⇔ (Any P xs × Any P ys)
-Any-++-⇔  xs ys = {!   !}
+Any-++-⇔  xs ys = record { to = {!   !} ; from = {!   !} }
+-}
 
 -- PLFA exercise: Show that the equivalence All-++-⇔ can be extended to an isomorphism.
+{-
 All-++-≃ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
   All P (xs ++ ys) ≃ (All P xs × All P ys)
 All-++-≃ xs ys = {!   !}
+-}
 -- PLFA exercise: Here is a universe-polymorphic version of composition,
 -- and a version of DeMorgan's law for Any and All expressed using it.
 
@@ -504,14 +537,18 @@ _∘′_ : ∀ {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {B : Set ℓ₂} 
   → (B → C) → (A → B) → A → C
 (g ∘′ f) x  =  g (f x)
 
+{-
 ¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
   → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
 ¬Any≃All¬ P xs = {!!}
+-}
 
 -- Can we prove the following? If not, explain why.
+{-
 ¬All≃Any¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
     → (¬_ ∘′ All P) xs ≃ Any (¬_ ∘′ P) xs
-¬All≃Any¬ = {!   !}
+¬All≃Any¬ = {!   !}-
+-}
 -- End of PLFA exercise
 
 -- Decidability of All
@@ -537,15 +574,30 @@ All? P? (x ∷ xs) | no ¬p | _ = no (λ { (x ∷ x₁) → ¬p x})
 
 -- PLFA exercise: repeat above for Any
 
+{-
 Any? : ∀ {A : Set} {P : A → Set} → Decidable P → Decidable (Any P)
 Any? dp = {!   !}
+-}
 
 -- PLFA exercises: All-∀ and Any-∃
 -- You will need the stronger version of extensionality
 -- (for dependent function types) given in PLFA Isomorphism.
 
+{-
+All-∀-iso = ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → x ∈ xs → P x
+Any-∃-iso = ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → ∃[ x ] (x ∈ xs × P x)
+
+All-∀-≃ : ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} →  All P xs ≃ (x ∈ xs → P x)
+All-∀-≃ = {!   !}
+
+Any-∃-≃ : ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → Any P xs ≃ ∃[ x ] (x ∈ xs × P x)
+Any-∃-≃ = {!   !}
+-}
+
 -- PLFA exercise: a version of 'filter' for decidable predicates
 
+{-
 filter? : ∀ {A : Set} {P : A → Set}
   → (P? : Decidable P) → List A → ∃[ ys ]( All P ys )
-filter? P? xs = {!!}
+filter? P? xs = {!   !}
+-}
