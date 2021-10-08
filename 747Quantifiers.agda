@@ -50,39 +50,40 @@ open _⇔_
 -- Show that ∀ distributes over ×.
 -- (The special case of → distributes over × was shown in the Connectives chapter.)
 
+{-
+Refine on the hole to get "mk-≃" and fill four fields by the nested helper function in "where" clause.
+-}
 ∀-distrib-× : ∀ {A : Set} {B C : A → Set} →
   (∀ (x : A) → B x × C x) ≃ (∀ (x : A) → B x) × (∀ (x : A) → C x)
 ∀-distrib-× {A} {B} {C} = mk-≃ ∀-distrib-×-to ∀-distrib-×-from ∀-distrib-×-from∘to ∀-distrib-×-to∘from
   where
-    {--
+    {-
     Refine two times to pattern match lambda and operator "_×_".
-    Refine on the two holes.
+    Then Refine on the two holes.
     The first hole: goal "B x₁", context "x₁ : A" "x : (x₂ : A) → B x₂ × C x₂".
     We apply "x" to "x₁" to get "B x₁ × C x₁", then we use "proj₁" to get the goal from the result.
-    The second hole has similar idea.
-    --}
+    The second hole has similar idea as the first case.
+    -}
     ∀-distrib-×-to : ((x : A) → B x × C x) → ((x : A) → B x) × ((x : A) → C x)
     ∀-distrib-×-to = λ x → ⟨ (λ x₁ → proj₁ (x x₁)) , (λ x₁ → proj₂ (x x₁)) ⟩
 
-    {--
+    {-
     Case split on null, we find there is a variable which contain a "_×_".
     So we use pattern match on this variable.
-    Then context "x₁ : A
-                  f2 : (x : A) → C x
-                  f1 : (x : A) → B x"
+    Then the context is "x₁ : A" "f2 : (x : A) → C x" "f1 : (x : A) → B x"
     and goal: "B x₁ × C x₁".
     It is clear that we can use "f1" and "f2" to get "B x₁" and "C x₁", then apply constructor to them.
-    --}
+    -}
     ∀-distrib-×-from : ((x : A) → B x) × ((x : A) → C x) → (x : A) → B x × C x
     ∀-distrib-×-from ⟨ f1 , f2 ⟩  x₁ = ⟨ f1 x₁ , f2 x₁ ⟩
 
-    --Refine on the hole get refl.
+    --Refine on the hole then get refl.
     ∀-distrib-×-from∘to : (x : (x₁ : A) → B x₁ × C x₁) → 
                           (∀-distrib-×-from ∘ ∀-distrib-×-to) x ≡ x
     ∀-distrib-×-from∘to fb×c = refl
 
     
-    --Refine on the hole get refl.
+    --Refine on the hole then get refl.
     ∀-distrib-×-to∘from : (y : ((x : A) → B x) × ((x : A) → C x)) →
                           (∀-distrib-×-to ∘ ∀-distrib-×-from) y ≡ y
     ∀-distrib-×-to∘from f×g = refl
@@ -90,12 +91,12 @@ open _⇔_
 -- 747/PLFA exercise: SumForAllImpForAllSum (1 point)
 -- Show that a disjunction of foralls implies a forall of disjunctions.
 
-{--
-Input has "_⊎_", so we case split it and get two cases.
-For the first hole, we get lambda expression after refine. The goal is "B x₁ ⊎ C x₁", context "x₁ : A", "x : (x₂ : A) → B x₂".
+{-
+Input has "_⊎_", so we case split it and then get two cases.
+For the first hole, we get lambda expression after refine. The goal is "B x₁ ⊎ C x₁", and context "x₁ : A", "x : (x₂ : A) → B x₂".
 We get "B x₁" by apply "x" to "x₁", then use "inj₁" to construct the goal.
 The second case has similar idea.
---}
+-}
 ⊎∀-implies-∀⊎ : ∀ {A : Set} {B C : A → Set} →
   (∀ (x : A) → B x) ⊎ (∀ (x : A) → C x)  →  ∀ (x : A) → B x ⊎ C x
 ⊎∀-implies-∀⊎ (inj₁ x) = λ x₁ → inj₁ (x x₁)
@@ -164,51 +165,51 @@ syntax ∃-syntax (λ x → B) = ∃[ x ] B
   ∃[ x ] (B x ⊎ C x) ≃ (∃[ x ] B x) ⊎ (∃[ x ] C x)
 ∃-distrib-⊎ {A} {B} {C} = mk-≃ ∃-distrib-⊎-to ∃-distrib-⊎-from ∃-distrib-⊎-from∘to ∃-distrib-⊎-to∘from
   where
-    {--
-    Case split on input variable. Then case split on variable which contain "_⊎_".
+    {-
+    Case split on input variable. Then case split on variables which contain "_⊎_".
     The first case:
     Goal: "∃-syntax B ⊎ ∃-syntax C"
-    We have "x₁ : B x" "x : A" in context, then by constructor of Σ we have "∃-syntax B". By "inj₁" we get the goal.
+    We have "x₁ : B x" "x : A" in context, then by constructor of "Σ" we have "∃-syntax B". Then by "inj₁" we get the goal.
     The second case has similar idea.
-    --}
+    -}
     ∃-distrib-⊎-to : ∃-syntax (λ x → B x ⊎ C x) → ∃-syntax B ⊎ ∃-syntax C
     ∃-distrib-⊎-to ⟨ x , inj₁ x₁ ⟩ = inj₁ ⟨ x , x₁ ⟩
     ∃-distrib-⊎-to ⟨ x , inj₂ y ⟩ = inj₂ ⟨ x , y ⟩
 
-    {--
+    {-
     Input type can be case split since it has "_⊎_".
-    Variable which contains "∃-syntax" can also be case split.
+    Variables which contains "∃-syntax" can also be case split.
     Then for the first case, we have goal: "∃-syntax (λ x₂ → B x₂ ⊎ C x₂)"
-    and context "x₁ : B x" "x : A". By the definition of Σ, we have "∃-syntax (λ x₂ → B x₂)",
-    to get the goal, we apply "inj₁" to x₁.
+    and context "x₁ : B x" "x : A". By the definition of "Σ", we have "∃-syntax (λ x₂ → B x₂)",
+    we then apply "inj₁" to x₁ to get the goal.
     The second has similar idea.
-    --}
+    -}
     ∃-distrib-⊎-from : ∃-syntax B ⊎ ∃-syntax C → ∃-syntax (λ x → B x ⊎ C x)
     ∃-distrib-⊎-from (inj₁ ⟨ x , x₁ ⟩) = ⟨ x , inj₁ x₁ ⟩
     ∃-distrib-⊎-from (inj₂ ⟨ x , x₁ ⟩) = ⟨ x , inj₂ x₁ ⟩
 
-    {--
+    {-
     Case split on the variable which contains "_⊎_" or "∃-syntax".
     Then all case are refl by refine.
-    --}
+    -}
     ∃-distrib-⊎-from∘to : ∀ (x) →  (∃-distrib-⊎-from ∘ ∃-distrib-⊎-to) x ≡ x
     ∃-distrib-⊎-from∘to ⟨ x , inj₁ x₁ ⟩ = refl
     ∃-distrib-⊎-from∘to ⟨ x , inj₂ y ⟩ = refl
 
-    {--
+    {-
     Case split on the variable which contains "_⊎_" or "∃-syntax".
     Then all case are refl by refine.
-    --}
+    -}
     ∃-distrib-⊎-to∘from : ∀ (x) →  (∃-distrib-⊎-to ∘ ∃-distrib-⊎-from) x ≡ x
     ∃-distrib-⊎-to∘from (inj₁ ⟨ x , x₁ ⟩) = refl
     ∃-distrib-⊎-to∘from (inj₂ ⟨ x , x₁ ⟩) = refl
 
 -- 747/PLFA exercise: ExistsProdImpProdExists (1 point)
 -- Show that existentials distribute over ×.
-{--
-Case split on the variable which contains "_⊎_" or "∃-syntax".
-Then by definition of "∃-syntax" and "_×_", we get the building blocks to construct the goal.
---}
+{-
+Case split on the variables which contain "_⊎_" or "∃-syntax".
+Then by definition of "∃-syntax" and "_×_", we get enough building blocks to construct the goal.
+-}
 ∃×-implies-×∃ : ∀ {A : Set} {B C : A → Set} →
   ∃[ x ] (B x × C x) → (∃[ x ] B x) × (∃[ x ] C x)
 ∃×-implies-×∃ ⟨ x , ⟨ fst , snd ⟩ ⟩ = ⟨ ⟨ x , fst ⟩ , ⟨ x , snd ⟩ ⟩
@@ -264,17 +265,17 @@ odd-∃  (odd-suc e)  with even-∃ e
 -- An alternate definition of y ≤ z.
 -- (Optional exercise: Is this an isomorphism?)
 
-{--
-This rule we need "∀ {y z : ℕ}" in the signature, while "∃-≤-to" does not.
+{-
+This rule we need "∀ {y z : ℕ}" in the signature, while "∃-≤-to" does not. Otherwise it will not compile.
 Case split on input variable, the first case is trivial and the second case is "suc" on the both terms of induction rule.
---}
-to-y+x≡z : ∀ {y z : ℕ} →  y ≤ z → y + (z ∸ y) ≡ z
-to-y+x≡z z≤n = refl
-to-y+x≡z (s≤s y≤z) = Eq.cong suc (to-y+x≡z y≤z)
+-}
+y≤z→y+z∸y≡z : ∀ {y z : ℕ} →  y ≤ z → y + (z ∸ y) ≡ z
+y≤z→y+z∸y≡z z≤n = refl
+y≤z→y+z∸y≡z (s≤s y≤z) = Eq.cong suc (y≤z→y+z∸y≡z y≤z)
 
-{--
+{-
 Case split on input variable, we need a helper function in the nested "where".
---}
+-}
 y+x≡z→y≤z : ∀ {x y z : ℕ} →  y + x ≡ z → y ≤ z
 y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
   where
@@ -290,12 +291,14 @@ y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
 ∃-≤ : ∀ {y z : ℕ} → ( (y ≤ z) ⇔ ( ∃[ x ] (y + x ≡ z) ) )
 ∃-≤ {y} {z} = record { to = ∃-≤-to ; from = ∃-≤-from }
   where
-  {--
+  {-
   Refine on the hole. Then we get the goal "y = ?0 ≡ z" in the second hole, so we need to fill "z ∸ y" in the first hole
   since we do not have "_-_" operator in the unary notation.
-  --}
+  For the second case we need the helper function which say monus is reduced to minus when the first arg of monus greater
+  than or equal to that of second arg.
+  -}
   ∃-≤-to : y ≤ z → ∃-syntax (λ x → y + x ≡ z)
-  ∃-≤-to y≤z = ⟨ z ∸ y , to-y+x≡z y≤z ⟩
+  ∃-≤-to y≤z = ⟨ z ∸ y , y≤z→y+z∸y≡z y≤z ⟩
 
   ∃-≤-from : ∃-syntax (λ x → y + x ≡ z) → y ≤ z
   ∃-≤-from ⟨ x , x₁ ⟩ = y+x≡z→y≤z x₁
@@ -314,10 +317,10 @@ y+x≡z→y≤z {x} {y} {.(y + x)} refl = y≤y+x
 
 -- 747/PLFA exercise: ExistsNegImpNegForAll (1 point)
 -- Existence of negation implies negation of universal.
-{--
+{-
 Case split input variable according to its splitable type.
-Then the hold can be solved by C-c C-a.
---}
+Then the hole can be solved by C-c C-a.
+-}
 ∃¬-implies-¬∀ : ∀ {A : Set} {B : A → Set}
   → ∃[ x ] (¬ B x)
     --------------

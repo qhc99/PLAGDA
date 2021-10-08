@@ -124,19 +124,19 @@ to∘from ×-assoc ⟨ x , ⟨ x₁ , x₂ ⟩ ⟩ = refl
 
 -- 747/PLFA exercise: IffIsoIfOnlyIf (1 point)
 -- Show A ⇔ B is isomorphic to (A → B) × (B → A).
-{-- 
-First case: 
+{- 
+The First case: 
 Case split on null, then case split on variable "x", we have goal "(A → B) × (B → A)", and context "to : A → B" and "from : B → A",
 Then we just construct the goal using operator "⟨_,_⟩".
 
-Second case:
+The Second case:
 It is the inverse of the first case, basically we can copy, paste and invert order of input and output of the first case.
 
-Third case and fourth case:
+The Third case and fourth case:
 Case split two times. 
 The goal of thrid case is not obviously refl, but after refine it becomes refl.
-The goal of fourth case is obvious refl.
---}
+The goal of fourth case is obviously refl.
+-}
 
 iff-iso-if-onlyif : ∀ {A B : Set} → A ⇔ B ≃ (A → B) × (B → A)
 _≃_.to iff-iso-if-onlyif record { to = to ; from = from } = ⟨ to , from ⟩
@@ -227,10 +227,10 @@ infix 1 _⊎_
 
 -- 747/PLFA exercise: SumCommIso (1 point)
 -- Sum is commutative up to isomorphism.
-{--
-Case split on every possible variable until it is dose not contain "⊎".
+{-
+Case split on every possible variable until no variable contain "⊎".
 Then from context the goal is very easy to prove.
---}
+-}
 ⊎-comm : ∀ {A B : Set} → A ⊎ B ≃ B ⊎ A
 to ⊎-comm (inj₁ x) = inj₂ x
 to ⊎-comm (inj₂ x) = inj₁ x
@@ -244,14 +244,14 @@ to∘from ⊎-comm (inj₂ x) = refl
 
 -- 747/PLFA exercise: SumAssocIso (1 point)
 -- Sum is associative up to isomorphism.
-{--
-We case split until variable not contain "⊎".
+{-
+We case split until no variable contain "_⊎_".
 
-"to" and "from" of isomorphism are solved using inj according to the variable's position in the goal, basically if 
+"to" and "from" of isomorphism are solved by using "inj" according to the variable's position in the goal, basically if 
 the variable appear in the first term of "⊎" in the goal, we use "inj₁". Otherwise we use "inj₂".
 
-"to∘from" and "from∘to" of isomorphism become refl when split to ends.
---}
+"to∘from" and "from∘to" of isomorphism become refl when case split to ends.
+-}
 ⊎-assoc : ∀ {A B C : Set} → (A ⊎ B) ⊎ C ≃ A ⊎ (B ⊎ C)
 to ⊎-assoc (inj₁ (inj₁ x)) = inj₁ x
 to ⊎-assoc (inj₁ (inj₂ x)) = inj₂ (inj₁ x)
@@ -289,9 +289,9 @@ uniq-⊥ h ()
 
 -- 747/PLFA exercise: EmptyLeftIdSumIso (1 point)
 -- Empty is the left unit of sum up to isomorphism.
-{--
+{-
 Case split consecutively until it is very easy to prove.
---}
+-}
 ⊎-identityˡ : ∀ {A : Set} → ⊥ ⊎ A ≃ A
 to ⊎-identityˡ (inj₂ x) = x
 from ⊎-identityˡ x = inj₂ x
@@ -300,9 +300,9 @@ to∘from ⊎-identityˡ y = refl
 
 -- 747/PLFA exercise: EmptyRightIdSumIso (1 point)
 -- Empty is the right unit of sum up to isomorphism.
-{--
+{-
 Same idea as the exercise above.
---}
+-}
 ⊎-identityʳ : ∀ {A : Set} → A ⊎ ⊥ ≃ A
 to ⊎-identityʳ (inj₁ x) = x
 from ⊎-identityʳ x = inj₁ x
@@ -395,10 +395,10 @@ _≲_.from∘to ⊎-distrib-× (inj₂ x) = refl
 -- Think of a counterexample to show the above isn't an isomorphism.
 
 -- PLFA exercise: a weak distributive law.
-{--
-The first case, we have "A" and "C", then using "inj₁" on "A", we get "A ⊎ (B × C)".
-The second case, we have "B" and "C", then we have "B × C" and finally the goal by inj₂.
---}
+{-
+For the first case, we have "A" and "C", then using "inj₁" on "A", we get "A ⊎ (B × C)".
+For the second case, we have "B" and "C", then we have "B × C" and finally the goal by "inj₂".
+-}
 ⊎-weak-× : ∀ {A B C : Set} → (A ⊎ B) × C → A ⊎ (B × C)
 ⊎-weak-× ⟨ inj₁ x , x₁ ⟩ = inj₁ x
 ⊎-weak-× ⟨ inj₂ x , x₁ ⟩ = inj₂ ⟨ x , x₁ ⟩
@@ -406,18 +406,28 @@ The second case, we have "B" and "C", then we have "B × C" and finally the goal
 
 -- 747/PLFA exercise: SumOfProdImpProdOfSum (1 point)
 -- A disjunct of conjuncts implies a conjunct of disjuncts.
-{--
+{-
 Case split and pattern matching, then reconstruct according to context and variable position, which 
 is used to determine which injunction to use.
 
-In the first case, we have "A × B", which means "A" and "B". Then we can get "A ⊎ C" by inj₁ and "B ⊍ D" similarly.
-The second case has same idea.
---}
+In the first case, we have "A × B", which means "A and B". Then we can get "A ⊎ C" by "inj₁" and "B ⊍ D" using similar idea.
+The second case has the same idea as the first case.
+-}
 ⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A × B) ⊎ (C × D) → (A ⊎ C) × (B ⊎ D)
 ⊎×-implies-×⊎ (inj₁ ⟨ a , b ⟩) = ⟨ inj₁ a , inj₁ b ⟩
 ⊎×-implies-×⊎ (inj₂ ⟨ c , d ⟩) = ⟨ inj₂ c , inj₂ d ⟩
 
 -- PLFA exercise: Is the converse true? If so, prove it; if not, give a counterexample.
+{-
+For the case we have "A" and "D" to construct "A ⊎ C" and "B ⊎ D", we cannot build the goal since "_×_" requires 
+the knowledge of "B" and "C", which we do not have.
+
+converse-⊎×-implies-×⊎ : ∀ {A B C D : Set} → (A ⊎ C) × (B ⊎ D) → (A × B) ⊎ (C × D)
+converse-⊎×-implies-×⊎ ⟨ inj₁ x , inj₁ x₁ ⟩ = inj₁ ⟨ x , x₁ ⟩
+converse-⊎×-implies-×⊎ ⟨ inj₁ x , inj₂ x₁ ⟩ = {!   !}
+converse-⊎×-implies-×⊎ ⟨ inj₂ x , inj₁ x₁ ⟩ = {!   !}
+converse-⊎×-implies-×⊎ ⟨ inj₂ x , inj₂ x₁ ⟩ = inj₂ ⟨ x , x₁ ⟩
+-}
 
 -- See PLFA for a number of slight differences with the standard library.
 
