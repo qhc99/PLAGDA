@@ -400,14 +400,16 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
     trans (l —→⟨ x ⟩ m2 —→⟨ x₁ ⟩ lm) mn = l —→⟨ x ⟩ (m2 —→⟨ x₁ ⟩ (trans lm mn ) )
 
   {-
-  For the first case, although we do not know it is refl from the goal, we tried the refl according to our experience
-  and find it works.
+  Case split.
 
-  For the second case,
+  For the first case, compute the goal using command C-c C-n got refl.
+
+  For the second case, compute on the goal, we got "(t —→⟨ x ⟩ ms1≤ms2-from (ms1≤ms2-to x₁)) ≡ (t —→⟨ x ⟩ x₁)".
+  By induction we have "ms1≤ms2-from (ms1≤ms2-to x₁) ≡ x₁", then we got the answer.
   -}
   ms1≤ms2-from∘to : ∀ {P Q} →  (x : P —↠ Q) → (ms1≤ms2-from ∘ ms1≤ms2-to) x ≡ x
-  ms1≤ms2-from∘to {P} {.P} (.P ∎) = refl
-  ms1≤ms2-from∘to {P} {Q} (p —→⟨ x ⟩ x₁) = {!   !}  
+  ms1≤ms2-from∘to (_ ∎) = refl
+  ms1≤ms2-from∘to (t —→⟨ x ⟩ x₁) rewrite  ms1≤ms2-from∘to x₁ = refl
 
 
 -- Determinism means we avoid having to worry about confluence.
