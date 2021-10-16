@@ -10,6 +10,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Decidable using (⌊_⌋; False; toWitnessFalse)
 open import Relation.Nullary.Negation using (¬?)
+open import Function using (_∘_)
 
 -- copied from 747Isomorphism
 
@@ -54,7 +55,7 @@ plus : Term
 plus = μ "+" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
          case ` "m"
            [zero⇒ ` "n"
-           |suc "m" ⇒ `suc (` "+" · ` "m" · ` "n") ]
+           |suc "m" ⇒ `suc (` "+" · ` "m" · ` "n") ] 
 
 2+2 : Term
 2+2 = plus · two · two
@@ -81,16 +82,51 @@ fourᶜ = plusᶜ · twoᶜ · twoᶜ
 -- 747/PLFA exercise: NatMul (1 point)
 -- Write multiplication for natural numbers.
 -- Alas, refinement will not help, and there is no way (yet) to write tests.
-
+{-
+By the example of "plus", we know that it is another language to describe the same thing.
+So we just need to express the "_*_" for "ℕ" in this new language.
+And definition of "_*_" is:
+"
+_*_ : ℕ → ℕ → ℕ
+zero * n =  zero  
+suc m * n =  n + m * n  
+"
+-}
 mul : Term
-mul = {!!}
+mul =  μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+         case ` "m"
+           [zero⇒ `zero
+           |suc "m'" ⇒ ` "+" · ` "n" · (` "*" · ` "m'" · ` "n") ]
 
 -- 747/PLFA exercise: ChurchMul (1 point)
 -- Write multiplication for Church numbers.
 -- Use of plusᶜ is optional! fixpoint is not needed.
+{-
+" ƛ "n" ⇒ ƛ "s" " is a function which make n times suc on the input.
+
+threeᶜ : Term
+threeᶜ =  ƛ "s" ⇒ ƛ "z" ⇒ ` "s" ∙ (` "s" · (` "s" · ` "z"))
+
+Let us verify the function by hand unrolling:
+sixᶜ ≡ mulᶜ ∙ twoᶜ ∙ threeᶜ ∙ sucᶜ ∙ `zero
+    ≡⟨ simply replace ⟩ 
+      (ƛ "s" ⇒ ƛ "z" ⇒ ` "s" · (` "s" · ` "z")) ∙ 
+      ((ƛ "s" ⇒ ƛ "z" ⇒ ` "s" ∙ (` "s" · (` "s" · ` "z"))) ∙ (ƛ "n" ⇒ `suc (` "n"))) ∙ 
+      `zero
+    ≡⟨ unroll the second line (or the second item) ⟩ 
+      (ƛ "s" ⇒ ƛ "z" ⇒ ` "s" · (` "s" · ` "z")) ∙ 
+      ((ƛ "n" ⇒ `suc (` "n")) ∙ ((ƛ "n" ⇒ `suc (` "n")) · ((ƛ "n" ⇒ `suc (` "n")) · ` "z")))) ∙ 
+      `zero
+    ≡⟨ apply first function to the second and thrid line (or item) ⟩ 
+      ((ƛ "n" ⇒ `suc (` "n")) ∙ ((ƛ "n" ⇒ `suc (` "n")) · ((ƛ "n" ⇒ `suc (` "n")) · ` "z")))) ∙ 
+      (((ƛ "n" ⇒ `suc (` "n")) ∙ ((ƛ "n" ⇒ `suc (` "n")) · ((ƛ "n" ⇒ `suc (` "n")) · ` "z"))))) ∙ zero
+    ≡ 
+      `suc `suc `suc `suc `suc `suc `zero
+-}
 
 mulᶜ : Term
-mulᶜ = {!!}
+mulᶜ = ƛ "m" ⇒ ƛ "n" ⇒ ƛ "s" ⇒ ƛ "z" ⇒
+         ` "m" · (` "n" · ` "s") · ` "z"
 
 -- These definitions let us avoid some backticks and quotes.
 
@@ -182,6 +218,10 @@ _ = refl
 _ : (ƛ "y" ⇒ ` "y") [ "x" := `zero ] ≡ ƛ "y" ⇒ ` "y"
 _ = refl
 
+-- quiz
+_ : (ƛ "y" ⇒ ` "x" · (ƛ "x" ⇒ ` "x")) [ "x" := `zero ] ≡ (ƛ "y" ⇒ `zero · (ƛ "x" ⇒ ` "x"))
+_ = refl
+
 -- PLFA exercise: eliminate common code in above with a helper function.
 
 -- Single-step reduction (written \em\to).
@@ -230,6 +270,34 @@ data _—→_ : Term → Term → Set where
   β-μ : ∀ {x M}
       ------------------------------
     → μ x ⇒ M —→ M [ x := μ x ⇒ M ]
+
+{-
+Quiz
+1.What does the following term step to? answer: 1
+
+(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")  —→  ???
+1.(ƛ "x" ⇒ ` "x")
+2.(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")
+3.(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")
+
+
+2).What does the following term step to? answer: 1
+
+(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")  —→  ???
+1.(ƛ "x" ⇒ ` "x")
+2.(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")
+3.(ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x") · (ƛ "x" ⇒ ` "x")
+
+
+3).What does the following term step to? (Where twoᶜ and sucᶜ are as defined above.) answer: 1
+
+twoᶜ · sucᶜ · `zero  —→  ???
+1.sucᶜ · (sucᶜ · `zero)
+2.(ƛ "z" ⇒ sucᶜ · (sucᶜ · ` "z")) · `zero
+3.`zero
+
+
+-}
 
 -- Arguments reduced to values before beta-reduction (call-by-value).
 -- Terms reduced from left to right.
@@ -285,9 +353,62 @@ data _—↠′_ : Term → Term → Set where
 -- 747/PLFA exercise: StepEmbedsIntoStepPrime (2 points)
 -- Show that the first definition embeds into the second.
 -- Why is it not an isomorphism?
-
+{-
+Refine and where pattern.
+-}
 ms1≤ms2 : ∀ {M N} → (M —↠ N) ≲ (M —↠′ N)
-ms1≤ms2 = {!!}
+ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘to = ms1≤ms2-from∘to }
+  where
+  {-
+  Case split. 
+  The first case can be built directly by "refl′"
+  The second case need the "trans′" rule. 
+  We have goal "P —↠′ Q" and context "x : P —→ M₁" "x₁ : M₁ —↠ Q".
+  By applying "step′" and induction respectively to "x" and "x₁", we transform the "—→" and "—↠" to "—↠'". 
+  Then by "trans′" we got the answer
+  -}
+  ms1≤ms2-to : ∀ {P Q} →  P —↠ Q → P —↠′ Q
+  ms1≤ms2-to {P} {_} (_ ∎) = refl′
+  ms1≤ms2-to (_ —→⟨ x ⟩ x₁) = trans′ (step′ x) (ms1≤ms2-to x₁)
+
+  {-
+  Case split.
+  For the first case, we have "P —→ Q" and the goal is "P —↠ Q".
+  There is no "step" for "—→", so we need the helper "Q —→ Q", which is "Q ∎".
+
+  The second case is quite straightforward.
+
+  For the thrid case, double case split dose not work!!!
+  We just case split on the first variable and in the second case we have a middle term that is not in the scope.
+  So we case split on the first variable again to get the hidden item. 
+  Then we will find that we now have another form of induction.
+  We tried the new induction form and find there is no longer the "termination checking failed".
+  Basically we have got a reduction on the first input.
+  -}
+  ms1≤ms2-from : ∀ {P Q} →  P —↠′ Q → P —↠ Q
+  ms1≤ms2-from {P} {Q} (step′ x) = P —→⟨ x ⟩ Q ∎
+  ms1≤ms2-from {P} {_} refl′ = P ∎
+  ms1≤ms2-from {P} {Q} (trans′ x x₁) = trans (ms1≤ms2-from x) (ms1≤ms2-from x₁)
+    where        
+    trans : ∀ {L M1 N1}
+      → L —↠ M1
+      → M1 —↠ N1
+      -------
+      → L —↠ N1
+    trans (_ ∎) mn = mn
+    trans (l —→⟨ x ⟩ _ ∎) mn = l —→⟨ x ⟩ mn
+    trans (l —→⟨ x ⟩ m2 —→⟨ x₁ ⟩ lm) mn = l —→⟨ x ⟩ (m2 —→⟨ x₁ ⟩ (trans lm mn ) )
+
+  {-
+  For the first case, although we do not know it is refl from the goal, we tried the refl according to our experience
+  and find it works.
+
+  For the second case,
+  -}
+  ms1≤ms2-from∘to : ∀ {P Q} →  (x : P —↠ Q) → (ms1≤ms2-from ∘ ms1≤ms2-to) x ≡ x
+  ms1≤ms2-from∘to {P} {.P} (.P ∎) = refl
+  ms1≤ms2-from∘to {P} {Q} (p —→⟨ x ⟩ x₁) = {!   !}  
+
 
 -- Determinism means we avoid having to worry about confluence.
 

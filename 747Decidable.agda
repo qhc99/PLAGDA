@@ -301,7 +301,7 @@ no x →-dec y = yes λ a → ⊥-elim (x a)
 -- 747/PLFA exercise: ErasBoolDec (3 points)
 -- Erasure relates boolean and decidable operations.
 {--
-Case split type "Dec" since it can be built by "yes" or "no".
+Case split type "Dec" since it can be built by either "yes" or "no".
 Then all cases below becomes refl.
 --}
 ∧-× : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ ∧ ⌊ y ⌋ ≡ ⌊ x ×-dec y ⌋
