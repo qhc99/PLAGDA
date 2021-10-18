@@ -96,7 +96,7 @@ mul : Term
 mul =  μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
          case ` "m"
            [zero⇒ `zero
-           |suc "m'" ⇒ ` "+" · ` "n" · (` "*" · ` "m'" · ` "n") ]
+           |suc "m" ⇒ plus · ` "n" · (` "*" · ` "m" · ` "n") ]
 
 -- 747/PLFA exercise: ChurchMul (1 point)
 -- Write multiplication for Church numbers.
@@ -401,7 +401,6 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
 
   {-
   Case split.
-
   For the first case, compute the goal using command C-c C-n got refl.
 
   For the second case, compute on the goal, we got "(t —→⟨ x ⟩ ms1≤ms2-from (ms1≤ms2-to x₁)) ≡ (t —→⟨ x ⟩ x₁)".
@@ -409,7 +408,7 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
   -}
   ms1≤ms2-from∘to : ∀ {P Q} →  (x : P —↠ Q) → (ms1≤ms2-from ∘ ms1≤ms2-to) x ≡ x
   ms1≤ms2-from∘to (_ ∎) = refl
-  ms1≤ms2-from∘to (t —→⟨ x ⟩ x₁) rewrite  ms1≤ms2-from∘to x₁ = refl
+  ms1≤ms2-from∘to (t —→⟨ x ⟩ x₁) rewrite ms1≤ms2-from∘to x₁ = refl
 
 
 -- Determinism means we avoid having to worry about confluence.
@@ -522,6 +521,36 @@ infixr 7 _⇒_
 data Type : Set where
   _⇒_ : Type → Type → Type
   `ℕ : Type
+
+{-
+Quiz
+
+What is the type of the following term?
+
+ƛ "s" ⇒ ` "s" · (` "s"  · `zero)
+
+1.(`ℕ ⇒ `ℕ) ⇒ (`ℕ ⇒ `ℕ)
+2.(`ℕ ⇒ `ℕ) ⇒ `ℕ
+3.`ℕ ⇒ (`ℕ ⇒ `ℕ)
+4.`ℕ ⇒ `ℕ ⇒ `ℕ
+5.`ℕ ⇒ `ℕ
+6.`ℕ
+Give more than one answer if appropriate.
+Answer: 5
+
+What is the type of the following term?
+
+(ƛ "s" ⇒ ` "s" · (` "s"  · `zero)) · sucᶜ
+
+1.(`ℕ ⇒ `ℕ) ⇒ (`ℕ ⇒ `ℕ)
+2.(`ℕ ⇒ `ℕ) ⇒ `ℕ
+3.`ℕ ⇒ (`ℕ ⇒ `ℕ)
+4.`ℕ ⇒ `ℕ ⇒ `ℕ
+5.`ℕ ⇒ `ℕ
+6.`ℕ
+Give more than one answer if appropriate.
+Answer: 6
+-}
 
 -- Contexts provide types for free variables.
 -- Essentially a list of (name, type) pairs, most recently added to right.
@@ -678,15 +707,50 @@ nope₂ (⊢ƛ (⊢` ∋x · ⊢` ∋x′))  =  contradiction (∋-injective ∋
 
 -- 747/PLFA exercise: MulTyped (2 points)
 -- Show that your mul above is well-typed.
+{-
+Refine consecutivly.
 
+For the goal "Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ ∋ "m" ⦂ `ℕ", we should use "Z" to refine since the target 
+is on the rightmost of the environment list. 
+
+For the goal " "m" ≢ "n" ", we need to assert two string literal are not equal, where we have a 
+helper function "_≠_" pre-defined, so we used it here. (Refine has some problems with string literal, 
+need rectify the result after refine).
+
+For the goal 
+"
+Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m'" ⦂ `ℕ ⊢
+      ` "+" · ` "n" · (` "*" · ` "m'" · ` "n") ⦂ `ℕ
+"
+To make code clean, we write a helper function here.
+
+When we encounter goals like "..., n ⦂ `ℕ ⊢ n ⦂ A_1098", we just use "Z" and refine.
+To make the interactive process smooth, we can complete the holes from right to left.
+And the final left hole has goal:
+"
+Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m" ⦂ `ℕ ⊢
+      plus ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
+", which is exactly the "⊢plus".
+-}
 ⊢mul : ∀ {Γ} → Γ ⊢ mul ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
-⊢mul = {!!}
-
+⊢mul {Γ} = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S ("m" ≠ "n")  Z)) ⊢zero helper)))
+  where
+  helper : Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m" ⦂ `ℕ ⊢
+      plus · ` "n" · (` "*" · ` "m" · ` "n") ⦂ `ℕ
+  helper = ⊢plus · (⊢` (S ("n" ≠ "m") Z)) · (⊢` (S ("*" ≠ "m") (S ("*" ≠ "n") (S ("*" ≠ "m") Z))) · (⊢` Z) · (⊢` (S  ("n" ≠ "m")  Z)))
+  
 -- 747/PLFA exercise: MulCTyped (2 points)
 -- Show that your mulᶜ above is well-typed.
-
+{-
+Basically the same idea as the above exercise.
+Note that we should not refine goals like " "m" ≢  "n" ".
+Instead we should use things like " ("m" ≠ "n") " and refine the hole.
+-}
 ⊢mulᶜ : ∀ {Γ A} → Γ  ⊢ mulᶜ ⦂ Ch A ⇒ Ch A ⇒ Ch A
-⊢mulᶜ = {!!}
+⊢mulᶜ {Γ} {A} = ⊢ƛ (⊢ƛ (⊢ƛ (⊢ƛ helper)))
+  where
+  helper : Γ , "m" ⦂ Ch A , "n" ⦂ Ch A , "s" ⦂ A ⇒ A , "z" ⦂ A ⊢ ` "m" · (` "n" · ` "s") · ` "z" ⦂ A
+  helper = ⊢` (S ("m" ≠ "z") (S ("m" ≠ "s") (S ("m" ≠ "n") Z))) · (⊢` (S ("n" ≠ "z") (S ("n" ≠ "s") Z)) · (⊢` (S ("s" ≠ "z")   Z))) · (⊢` Z)
 
 -- Unicode:
 
