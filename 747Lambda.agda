@@ -383,7 +383,7 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
   So we case split on the first variable again to get the hidden item. 
   Then we will find that we now have another form of induction.
   We tried the new induction form and find there is no longer the "termination checking failed".
-  Basically we have got a reduction on the first input.
+  Basically we have got a reduction on the first input variable.
   -}
   ms1≤ms2-from : ∀ {P Q} →  P —↠′ Q → P —↠ Q
   ms1≤ms2-from {P} {Q} (step′ x) = P —→⟨ x ⟩ Q ∎
@@ -403,7 +403,7 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
   Case split.
   For the first case, compute the goal using command C-c C-n got refl.
 
-  For the second case, compute on the goal, we got "(t —→⟨ x ⟩ ms1≤ms2-from (ms1≤ms2-to x₁)) ≡ (t —→⟨ x ⟩ x₁)".
+  For the second case, compute the goal, we got "(t —→⟨ x ⟩ ms1≤ms2-from (ms1≤ms2-to x₁)) ≡ (t —→⟨ x ⟩ x₁)".
   By induction we have "ms1≤ms2-from (ms1≤ms2-to x₁) ≡ x₁", then we got the answer.
   -}
   ms1≤ms2-from∘to : ∀ {P Q} →  (x : P —↠ Q) → (ms1≤ms2-from ∘ ms1≤ms2-to) x ≡ x
@@ -722,10 +722,10 @@ For the goal
 Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m'" ⦂ `ℕ ⊢
       ` "+" · ` "n" · (` "*" · ` "m'" · ` "n") ⦂ `ℕ
 "
-To make code clean, we write a helper function here.
+To make code clean, we write a helper function in nested where.
 
 When we encounter goals like "..., n ⦂ `ℕ ⊢ n ⦂ A_1098", we just use "Z" and refine.
-To make the interactive process smooth, we can complete the holes from right to left.
+To make the interactive process smooth, we can complete holes from right to left.
 And the final left hole has goal:
 "
 Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m" ⦂ `ℕ ⊢
