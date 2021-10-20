@@ -13,6 +13,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Function using (_∘_)
 open import Level using (Level)
+open import 747Connectives using (_⊎_)
 
 -- Copied from 747Isomorphism.
 
@@ -138,31 +139,21 @@ _ = refl
 ∷→++ x xs = refl 
 
 {--
-Case split both on "xs" and "ys".
-The first case is refl.
-The second and thrid case need "++-identityʳ" to reduce empty list, then the goal becomes refl.
-For fourth case, we try induction of "reverse-++-commute xs (x₁ ∷ ys)" by observe both sides of goal, 
-which is "reverse (xs ++ x₁ ∷ ys) ++ [ x ] ≡ (reverse ys ++ [ x₁ ]) ++ reverse xs ++ [ x ]".
-After rewrite, we get goal "((reverse ys ++ [ x₁ ]) ++ reverse xs) ++ [ x ] ≡ (reverse ys ++ [ x₁ ]) ++ reverse xs ++ [ x ]", 
-which is exactly the "++-assoc" rule.
+This exercise can be done by induction on only one variable.
+Case split on two variables makes thing a bit more complex.
+Two cases are easy to prove, no more comments there. 
 --}
 reverse-++-commute : ∀ {A : Set} (xs ys : List A)
  → reverse (xs ++ ys) ≡ reverse ys ++ reverse xs
-reverse-++-commute [] [] = refl
-reverse-++-commute [] (x ∷ ys) rewrite ++-identityʳ (reverse ys ++ [ x ])  = refl
-reverse-++-commute (x ∷ xs) [] rewrite ++-identityʳ xs  = refl
-reverse-++-commute (x ∷ xs) (x₁ ∷ ys) 
-  rewrite reverse-++-commute xs (x₁ ∷ ys) | 
-          ++-assoc (reverse ys ++ [ x₁ ]) (reverse xs) [ x ]  = refl
+reverse-++-commute [] ys = sym (++-identityʳ (reverse ys))
+reverse-++-commute (x ∷ xs) ys rewrite reverse-++-commute xs ys = ++-assoc (reverse ys) (reverse xs) [ x ]
 
 -- 747/PLFA exercise: RevInvol (1 point)
 -- Reverse is its own inverse.
 -- Changed from PLFA to make xs explicit.
 {--
-Case split on variable, we get the first case refl.
-For the second case, the goal is "reverse (reverse xs ++ [ x ]) ≡ x ∷ xs".
-By rewrite on "reverse-++-commute (reverse xs) [ x ]", we get "reverse (reverse xs)", which can utilize induction.
-After rewrite the "reverse-++-commute" and induction rule the goal becomes refl.
+Case split the only variable.
+Two cases are easy to prove, no more comments there. 
 --}
 reverse-involutive : ∀ {A : Set} (xs : List A)
  → reverse (reverse xs) ≡ xs
@@ -222,9 +213,8 @@ _ = refl
 -- The map of a composition is the composition of maps.
 -- Changed from PLFA: some arguments made explicit, uses pointwise equality.
 {--
-Only xs in this case is splitable.
-The first case is trivially refl after split.
-The second case is also refl after rewrite by induction.
+Only "xs" can be case split by it inherent structure.
+Two cases are easy to prove, no more comments there. 
 --}
 map-compose : ∀ {A B C : Set} (f : A → B) (g : B → C) (xs : List A)
  → map (g ∘ f) xs ≡ (map g ∘ map f) xs
@@ -235,14 +225,13 @@ map-compose f g (x ∷ xs) rewrite map-compose f g xs = refl
 -- The map of an append is the append of maps.
 -- Changed from PLFA: some arguments made explicit.
 {--
-Similar idea as above exercise.
+Case split two lists make things a bit more complex.
+Two cases are easy to prove, no more comments there. 
 --}
 map-++-dist : ∀ {A B : Set} (f : A → B) (xs ys : List A)
  →  map f (xs ++ ys) ≡ map f xs ++ map f ys
-map-++-dist f [] [] = refl
-map-++-dist f [] (x ∷ ys) = refl
-map-++-dist f (x ∷ xs) [] rewrite map-++-dist f xs [] = refl
-map-++-dist f (x ∷ xs) (x₁ ∷ ys) rewrite map-++-dist f xs (x₁ ∷ ys) = refl
+map-++-dist f [] ys = refl
+map-++-dist f (x ∷ xs) ys rewrite map-++-dist f xs ys = refl
 
 -- PLFA exercise: map over trees
 -- Here is a definition of trees with
@@ -254,7 +243,6 @@ data Tree (A B : Set) : Set where
 
 -- Write map for Trees.
 {--
-Case split on type "Tree".
 When reach the leaf, just convert.
 When reach the node, convert the node and recursivly convert its left and right tree.
 --}
@@ -297,23 +285,20 @@ _ = refl
 -- Show that foldr over an append can be expressed as
 -- foldrs over each list.
 {--
-Case split both lists.
-The first two cases are trivial since they are refl.
-The two sides of goal equals when rewrite by "++-identityʳ xs".
-The goal of fourth case becomes refl after rewrite by induction.
+Case split two lists make things a bit more complex.
+Two cases are easy to prove, no more comments there. 
 --}
 foldr-++ : ∀ {A B : Set} (_⊗_ : A → B → B) (e : B) (xs ys : List A) →
   foldr _⊗_ e (xs ++ ys) ≡ foldr _⊗_ (foldr _⊗_ e ys) xs
-foldr-++ _⊗_ e [] [] = refl
-foldr-++ _⊗_ e [] (x ∷ ys) = refl
-foldr-++ _⊗_ e (x ∷ xs) [] rewrite ++-identityʳ xs = refl
-foldr-++ _⊗_ e (x ∷ xs) (x₁ ∷ ys) rewrite foldr-++ _⊗_ e xs (x₁ ∷ ys) = refl
+foldr-++ _⊗_ e [] ys = refl
+foldr-++ _⊗_ e (x ∷ xs) ys rewrite foldr-++ _⊗_ e  xs ys = refl
 
 -- 747/PLFA exercise: MapIsFoldr (1 point)
 -- Show that map can be expressed as a fold.
 -- Changed from PLFA: some arguments made explicit, uses pointwise equality.
 {--
-Similar idea as before exercise: case split and induction.
+Case split the only list.
+Two cases are easy to prove, no more comments there. 
 --}
 map-is-foldr : ∀ {A B : Set} (f : A → B) (xs : List A) →
   map f xs ≡ foldr (λ x rs → f x ∷ rs) [] xs
@@ -430,8 +415,9 @@ foldl _⊗_ e (x ∷ xs) = foldl _⊗_ (e ⊗ x) xs
 -- Show that foldr and foldl compute the same value on a monoid
 -- when the base case is the identity.
 -- Hint: write a helper function for when the base case of foldl is an arbitrary value.
+
 {-
-The first case is symmetry version of "foldr-monoid" of the first case.
+The first case is easy to prove.
 For the second case, we have sequence of rewrite below.
 Goal at the start:                                "foldl _⊗_ (y ⊗ x) xs ≡ (y ⊗ foldl _⊗_ (id ⊗ x) xs)"
 After rewrite "foldl-monoid xs (y ⊗ x)": "((y ⊗ x) ⊗ foldl _⊗_ id xs) ≡ (y ⊗ foldl _⊗_ x xs)"
@@ -450,7 +436,7 @@ foldl-monoid {A} {{m}} (x ∷ xs) y
 
 {--
 Case split on "List" type variable.
-The first case is trivial.
+The first case is easy to prove.
 For the second case, we show transformation below:
 Goal at the start:                    "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldr _⊗_ id xs)"
 After rewrite "sym (foldl-r-mon xs)": "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldl _⊗_ id xs)"
@@ -460,7 +446,7 @@ Then goal becomes "foldl-monoid xs x"
 foldl-r-mon : ∀ {A : Set} → {{m : IsMonoid A}} →
   ∀ (xs : List A) → foldl _⊗_ id xs ≡ foldr _⊗_ id xs
 foldl-r-mon [] = refl
-foldl-r-mon {A} {{m}} (x ∷ xs) 
+foldl-r-mon (x ∷ xs) 
   rewrite 
     sym (foldl-r-mon xs) | 
     identityˡ x  = foldl-monoid xs x
@@ -519,9 +505,36 @@ from (All-++-⇔ (x ∷ xs) ys) ⟨ px ∷ apxs , apys ⟩
 -- an equivalence relating ∈ and _++_.
 
 {-
+any-extend : ∀ {A : Set} {P : A → Set} (xs ys : List A) →  Any P xs →  Any P (xs ++ ys)
+any-extend [] [] ()
+any-extend [] (x ∷ ys) ()
+any-extend (x ∷ xs) [] (here x₁) = here x₁
+any-extend (x ∷ xs) [] (there a) rewrite ++-identityʳ (x ∷ xs) = there a
+any-extend (x ∷ xs) (x₁ ∷ ys) (here x₂) = here x₂
+any-extend (x ∷ xs) (x₁ ∷ ys) (there a) = there (any-extend xs (x₁ ∷ ys) a)
+
+any-preextend-single : ∀ {A : Set} {P : A → Set} {x : A} (xs : List A) →  Any P xs →  Any P (x ∷ xs)
+any-preextend-single [] ()
+any-preextend-single (x ∷ xs) (here x₁) = there (here x₁)
+any-preextend-single (x ∷ xs) (there a) = there (any-preextend-single xs a)
+
+any-preextend : ∀ {A : Set} {P : A → Set} (xs ys : List A) →  Any P ys →  Any P (xs ++ ys)
+any-preextend [] .(_ ∷ _) (here x) = here x
+any-preextend [] .(_ ∷ _) (there a) = there a
+any-preextend (x ∷ xs) .(_ ∷ _) (here x₁) = {!   !}
+any-preextend (x ∷ xs) .(_ ∷ _) (there a) = {!   !}
+
+
 Any-++-⇔ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
-  Any P (xs ++ ys) ⇔ (Any P xs × Any P ys)
-Any-++-⇔  xs ys = record { to = {!   !} ; from = {!   !} }
+  Any P (xs ++ ys) ⇔ (Any P xs ⊎ Any P ys)
+Any-++-⇔ {A} {P}  xs ys = record { to = Any-++-⇔-to ; from = Any-++-⇔-from }
+  where
+  Any-++-⇔-to : Any P (xs ++ ys) → Any P xs ⊎ Any P ys
+  Any-++-⇔-to x = {!  !}
+
+  Any-++-⇔-from : Any P xs ⊎ Any P ys → Any P (xs ++ ys)
+  Any-++-⇔-from (_⊎_.inj₁ x) = any-extend xs ys x
+  Any-++-⇔-from (_⊎_.inj₂ x) = {!   !}}
 -}
 
 -- PLFA exercise: Show that the equivalence All-++-⇔ can be extended to an isomorphism.
