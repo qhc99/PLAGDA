@@ -13,7 +13,6 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Function using (_∘_)
 open import Level using (Level)
-open import 747Connectives using (_⊎_)
 
 -- Copied from 747Isomorphism.
 
@@ -436,7 +435,7 @@ foldl-monoid {A} {{m}} (x ∷ xs) y
   identityˡ x | 
   foldl-monoid xs x 
   = assoc y x (foldl _⊗_ id xs)
-  
+
 {--
 Case split on "List" type variable.
 The first case is easy to prove.
