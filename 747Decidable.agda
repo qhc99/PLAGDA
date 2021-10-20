@@ -128,19 +128,19 @@ _ = refl
 -- Decidable strict equality.
 -- You will need these helper functions as we did above.
 {--
-Case split on null, then case split on the variable. The result becomes "()".
+Case split consecutivly.
 --}
 ¬z<z : ¬ (zero < zero)
 ¬z<z ()
 
 {--
-Case split on null, then case split on type "suc m < suc n", then answer becomes obvious.
+Case split consecutivly., then answer becomes obvious.
 --}
 ¬s<s : ∀ {m n : ℕ} → ¬ (m < n) → ¬ (suc m < suc n)
 ¬s<s x (s<s x₁) = x x₁
 
 {--
-Similar idea with function "¬z<z".
+Case split consecutivly.
 --}
 ¬s<z : ∀ {n : ℕ} → ¬ (suc n < zero)
 ¬s<z ()
@@ -150,8 +150,8 @@ Case split both on "m" and "n".
 Although the first and the third case can be solved by C-c C-a, tests will not pass in this way.
 We have hint of the three helper function and "_≤?_ ".
 Thus we should solve the first and thrid case with the helper function.
-For the fourth case, we copy the structure of the fourth case of "_≤?_" and add holes to the output.
-Then the fourth case becomes easy to solve by context and hint.
+For the fourth case, it is similar to "_≤?_", we add the "with" clause and correspoding variable, then split on it.
+Using the "with" clause, the fourth case becomes easy to prove.
 --}
 _<?_ : ∀ (m n : ℕ) → Dec (m < n)
 zero <? zero = no (¬z<z)
@@ -175,12 +175,12 @@ _ = refl
 
 -- 747/PLFA exercise: DecNatEq (3 points)
 -- Decidable equality for natural numbers.
-{--
+{-
 The first three cases are trivial since they can be solved by C-c C-a.
-For the fourth case, by the hint of previous exercise, we need to know the construct of "Dec (m ≡ n)" before induction.
-So here we use the with clause as before and add holes. The first hole can be solved by C-c C-a too, while for the 
-second hole we need the rule "¬ (suc m) ≡ (suc n)", which is built by the nested helper function.
---}
+For the fourth case, by the hint of previous exercise, here we use the "with" clause as before and add holes. 
+The first hole can be solved by C-c C-a too, while for the second hole we need the rule "¬ (suc m) ≡ (suc n)", 
+which is built by the nested helper function.
+-}
 _≡ℕ?_ : ∀ (m n : ℕ) → Dec (m ≡ n) -- split m,n
 zero ≡ℕ? zero = yes refl
 zero ≡ℕ? suc n = no λ ()
@@ -301,18 +301,16 @@ no x →-dec y = yes λ a → ⊥-elim (x a)
 -- 747/PLFA exercise: ErasBoolDec (3 points)
 -- Erasure relates boolean and decidable operations.
 {--
-Case split type "Dec" since it can be built by either "yes" or "no".
+Case split one variable in a single step since we can make cases shorter by the property of short circuit. 
 Then all cases below becomes refl.
 --}
 ∧-× : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ ∧ ⌊ y ⌋ ≡ ⌊ x ×-dec y ⌋
 ∧-× (yes x) (yes x₁) = refl
 ∧-× (yes x) (no x₁) = refl
-∧-× (no x) (yes x₁) = refl
-∧-× (no x) (no x₁) = refl
+∧-× (no x) y = refl
 
 ∨-× : ∀ {A B : Set} (x : Dec A) (y : Dec B) → ⌊ x ⌋ ∨ ⌊ y ⌋ ≡ ⌊ x ⊎-dec y ⌋
-∨-× (yes x) (yes x₁) = refl
-∨-× (yes x) (no x₁) = refl
+∨-× (yes x) y = refl
 ∨-× (no x) (yes x₁) = refl
 ∨-× (no x) (no x₁) = refl
 
@@ -332,8 +330,8 @@ false iff false = true
 Case split variables which contain "Dec" seems not feasible in this case, as 
 we have no evidence in the fourth case to get the "⊥", which is the goal.
 Since we have "_→-dec_" at hand and we know that "_⇔_" is built by two direction of  "_→_".
-So we tried a helper function below which get the result "_⇔_" in the pure "Dec" world from its signature. 
-And we find its four cases can be solved by C-c C-a.
+So we tried a helper function below which get the result "_⇔_" in the pure "Dec" world. 
+And we find its all cases can be solved by C-c C-a.
 --}
 _⇔-dec_ : ∀ {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
 da ⇔-dec db = mk-⇔-in-dec (da →-dec db) (db →-dec da)

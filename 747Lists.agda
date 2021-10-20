@@ -225,6 +225,7 @@ map-compose f g (x ∷ xs) rewrite map-compose f g xs = refl
 -- The map of an append is the append of maps.
 -- Changed from PLFA: some arguments made explicit.
 {--
+This exercise can be done by induction on only one variable.
 Case split two lists make things a bit more complex.
 Two cases are easy to prove, no more comments there. 
 --}
@@ -285,6 +286,7 @@ _ = refl
 -- Show that foldr over an append can be expressed as
 -- foldrs over each list.
 {--
+This exercise can be done by induction on only one variable.
 Case split two lists make things a bit more complex.
 Two cases are easy to prove, no more comments there. 
 --}
@@ -405,7 +407,7 @@ foldr-monoid-++ xs ys rewrite foldr-++ _⊗_ id xs ys = foldr-monoid xs (foldr _
 --   foldr _⊗_ e [ x , y , z ]  =  x ⊗ (y ⊗ (z ⊗ e))
 --   foldl _⊗_ e [ x , y , z ]  =  ((e ⊗ x) ⊗ y) ⊗ z
 {-
-result is saved in the second argument of expression and reduced to the result at the end of list.
+result is saved in the second argument and reduced to the result at the end of list.
 -}
 foldl : ∀ {A B : Set} → (B → A → B) → B → List A → B
 foldl _⊗_ e [] = e
@@ -430,10 +432,11 @@ foldl-monoid : ∀ {A : Set} → {{m : IsMonoid A}} →
 foldl-monoid [] y = sym (identityʳ y)
 foldl-monoid {A} {{m}} (x ∷ xs) y 
   rewrite 
-    foldl-monoid xs (y ⊗ x) | 
-    identityˡ x | 
-    foldl-monoid xs x = assoc y x (foldl _⊗_ id xs)
-
+  foldl-monoid xs (y ⊗ x) | 
+  identityˡ x | 
+  foldl-monoid xs x 
+  = assoc y x (foldl _⊗_ id xs)
+  
 {--
 Case split on "List" type variable.
 The first case is easy to prove.
@@ -441,15 +444,12 @@ For the second case, we show transformation below:
 Goal at the start:                    "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldr _⊗_ id xs)"
 After rewrite "sym (foldl-r-mon xs)": "foldl _⊗_ (id ⊗ x) xs ≡ (x ⊗ foldl _⊗_ id xs)"
 After rewrite "identityˡ x":                  "foldl _⊗_ x xs ≡ (x ⊗ foldl _⊗_ id xs)".
-Then goal becomes "foldl-monoid xs x"
+Then the goal becomes "foldl-monoid xs x"
 --}
 foldl-r-mon : ∀ {A : Set} → {{m : IsMonoid A}} →
   ∀ (xs : List A) → foldl _⊗_ id xs ≡ foldr _⊗_ id xs
 foldl-r-mon [] = refl
-foldl-r-mon (x ∷ xs) 
-  rewrite 
-    sym (foldl-r-mon xs) | 
-    identityˡ x  = foldl-monoid xs x
+foldl-r-mon (x ∷ xs) rewrite sym (foldl-r-mon xs) | identityˡ x  = foldl-monoid xs x
 
 
 -- Inductively-defined predicates over lists
