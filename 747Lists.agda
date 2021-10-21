@@ -13,6 +13,7 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Product using (_×_; ∃; ∃-syntax) renaming (_,_ to ⟨_,_⟩)
 open import Function using (_∘_)
 open import Level using (Level)
+open import 747Connectives using (_⊎_)
 
 -- Copied from 747Isomorphism.
 
@@ -502,8 +503,13 @@ from (All-++-⇔ (x ∷ xs) ys) ⟨ px ∷ apxs , apys ⟩
 
 -- PLFA exercise: state and prove Any-++-⇔, and use it to demonstrate
 -- an equivalence relating ∈ and _++_.
-
 {-
+Spend way too much time than expected!
+So I will not try other bonus parts and they were commented away.
+-}
+{-
+Must case split all three variables, then all cases are easy to prove.
+-}
 any-extend : ∀ {A : Set} {P : A → Set} (xs ys : List A) →  Any P xs →  Any P (xs ++ ys)
 any-extend [] [] ()
 any-extend [] (x ∷ ys) ()
@@ -512,11 +518,9 @@ any-extend (x ∷ xs) [] (there a) rewrite ++-identityʳ (x ∷ xs) = there a
 any-extend (x ∷ xs) (x₁ ∷ ys) (here x₂) = here x₂
 any-extend (x ∷ xs) (x₁ ∷ ys) (there a) = there (any-extend xs (x₁ ∷ ys) a)
 
-any-preextend-single : ∀ {A : Set} {P : A → Set} {x : A} (xs : List A) →  Any P xs →  Any P (x ∷ xs)
-any-preextend-single [] ()
-any-preextend-single (x ∷ xs) (here x₁) = there (here x₁)
-any-preextend-single (x ∷ xs) (there a) = there (any-preextend-single xs a)
-
+{-
+It seems that we need some tricky helper functions there.
+-}
 any-preextend : ∀ {A : Set} {P : A → Set} (xs ys : List A) →  Any P ys →  Any P (xs ++ ys)
 any-preextend [] .(_ ∷ _) (here x) = here x
 any-preextend [] .(_ ∷ _) (there a) = there a
@@ -533,8 +537,8 @@ Any-++-⇔ {A} {P}  xs ys = record { to = Any-++-⇔-to ; from = Any-++-⇔-from
 
   Any-++-⇔-from : Any P xs ⊎ Any P ys → Any P (xs ++ ys)
   Any-++-⇔-from (_⊎_.inj₁ x) = any-extend xs ys x
-  Any-++-⇔-from (_⊎_.inj₂ x) = {!   !}}
--}
+  Any-++-⇔-from (_⊎_.inj₂ x) = {!   !}
+
 
 -- PLFA exercise: Show that the equivalence All-++-⇔ can be extended to an isomorphism.
 {-
