@@ -519,7 +519,7 @@ any-extend (x ∷ xs) (x₁ ∷ ys) (here x₂) = here x₂
 any-extend (x ∷ xs) (x₁ ∷ ys) (there a) = there (any-extend xs (x₁ ∷ ys) a)
 
 {-
-It seems that we need some tricky helper functions there.
+It seems that we need some small but trickey helper functions there.
 -}
 any-preextend : ∀ {A : Set} {P : A → Set} (xs ys : List A) →  Any P ys →  Any P (xs ++ ys)
 any-preextend [] .(_ ∷ _) (here x) = here x
