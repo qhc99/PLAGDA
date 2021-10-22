@@ -149,8 +149,7 @@ progress-iso {M} = mk-≃ progress-iso-to progress-iso-from progress-iso-from∘
   {-
   Case split "_⊎_".
   In the first case we have "Value M", so we should refine on "done".
-  In the second case, we case split the "∃-syntax".
-  Since we do not have "Value M", the only remain option is "step".
+  In the second case, since we do not have "Value M", the only remain option is "step".
   -}
   progress-iso-from : Value M ⊎ ∃-syntax (_—→_ M) → Progress M
   progress-iso-from (inj₁ x) = done x
@@ -166,20 +165,19 @@ progress-iso {M} = mk-≃ progress-iso-to progress-iso-from progress-iso-from∘
   progress-iso-to∘form (inj₁ x) = refl
   progress-iso-to∘form (inj₂ y) = refl
 
+{-Since we know "Progress M ≃ Value M ⊎ ∃[ N ](M —→ N)"-}
 progress′ : ∀ M {A} → ∅ ⊢ M ⦂ A → Value M ⊎ ∃[ N ](M —→ N)
-progress′ m c = {!   !}
+progress′ M x = (_≃_.to progress-iso) (progress x)
 
 -- 747/PLFA exercise: ValueEh (1 point)
 -- Write a function to decide whether a well-typed term is a value.
 -- Hint: reuse theorems proved above to do most of the work.
 
+{-we know there is a progress, so we use with clause there. Then it becomes easy to prove.-}
 value? : ∀ {A M} → ∅ ⊢ M ⦂ A → Dec (Value M)
-value? (⊢ƛ m:a) = yes V-ƛ
-value? (m:a · m:a₁) = no (λ ())
-value? ⊢zero = yes V-zero
-value? (⊢suc m:a) = yes (V-suc {!   !})
-value? (⊢case m:a m:a₁ m:a₂) = no (λ ())
-value? (⊢μ m:a) = no (λ ())
+value? x with progress x 
+... | step x₁ = no (—→¬V  x₁)
+... | done x₁ = yes x₁
 
 -- Preservation: types are preserved by reduction.
 
