@@ -135,17 +135,51 @@ progress (⊢μ m:a) = step β-μ
 -- of the progress theorem directly.
 
 progress-iso : ∀ {M} → Progress M ≃ Value M ⊎ ∃[ N ](M —→ N)
-progress-iso = {!!}
+progress-iso {M} = mk-≃ progress-iso-to progress-iso-from progress-iso-from∘to progress-iso-to∘form
+  where
+  {-
+  Case split.
+  For function "step", we need to specify its implicit argument since it is very very very useful...
+  Basically we need to decide which inj to use by the idea of "V¬—→" and "—→¬V" above.
+  -}
+  progress-iso-to :  ∀ {P} → Progress P → Value P ⊎ ∃-syntax (_—→_ P)
+  progress-iso-to (step {n} x) = inj₂ ⟨ n , x ⟩
+  progress-iso-to (done x) = inj₁ x
+
+  {-
+  Case split "_⊎_".
+  In the first case we have "Value M", so we should refine on "done".
+  In the second case, we case split the "∃-syntax".
+  Since we do not have "Value M", the only remain option is "step".
+  -}
+  progress-iso-from : Value M ⊎ ∃-syntax (_—→_ M) → Progress M
+  progress-iso-from (inj₁ x) = done x
+  progress-iso-from (inj₂ ⟨ fst , snd ⟩) = step snd
+
+ {-compute on goal get refl.-}
+  progress-iso-from∘to : (x : Progress M) → progress-iso-from (progress-iso-to x) ≡ x
+  progress-iso-from∘to (step x) = refl
+  progress-iso-from∘to (done x) = refl
+
+  {-for the second case, refine get refl.-}
+  progress-iso-to∘form : (y : Value M ⊎ ∃-syntax (_—→_ M)) → progress-iso-to (progress-iso-from y) ≡ y
+  progress-iso-to∘form (inj₁ x) = refl
+  progress-iso-to∘form (inj₂ y) = refl
 
 progress′ : ∀ M {A} → ∅ ⊢ M ⦂ A → Value M ⊎ ∃[ N ](M —→ N)
-progress′ m m:a = {!!}
+progress′ m c = {!   !}
 
 -- 747/PLFA exercise: ValueEh (1 point)
 -- Write a function to decide whether a well-typed term is a value.
 -- Hint: reuse theorems proved above to do most of the work.
 
 value? : ∀ {A M} → ∅ ⊢ M ⦂ A → Dec (Value M)
-value? m:a = {!!}
+value? (⊢ƛ m:a) = yes V-ƛ
+value? (m:a · m:a₁) = no (λ ())
+value? ⊢zero = yes V-zero
+value? (⊢suc m:a) = yes (V-suc {!   !})
+value? (⊢case m:a m:a₁ m:a₂) = no (λ ())
+value? (⊢μ m:a) = no (λ ())
 
 -- Preservation: types are preserved by reduction.
 
