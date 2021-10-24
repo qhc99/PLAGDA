@@ -480,7 +480,9 @@ postulate
     → M —→ N
       ---------
     → ¬ Value M
-
+{-
+By analogy, we get rules below.
+-}
 V¬—→ : ∀ {Γ A}{M : Γ ⊢ A}{N : Γ ⊢ A}
   → Value M
     ----------
@@ -797,7 +799,9 @@ _ = refl
 -- _ = refl
 
 -- -- PLFA exercise: use the evaluation to show that two times two is four.
-
+{-
+see the last line, we have "(done (V-suc (V-suc (V-suc (V-suc V-zero)))))", which is the answer.
+-}
 {-
 _ : eval (gas 100) (mul · two · two) ≡ 
   steps
