@@ -378,9 +378,9 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
 
   The second case is quite straightforward.
 
-  For the thrid case, double case split dose not work!!!
+  For the thrid case, double variables case split dose not work!!!
   We just case split on the first variable and in the second case we have a middle term that is not in the scope.
-  So we case split on the first variable again to get the hidden item. 
+  So we case split on the first variable again to try getting the hidden item. 
   Then we will find that we now have another form of induction.
   We tried the new induction form and find there is no longer the "termination checking failed".
   Basically we have got a reduction on the first input variable.
@@ -397,7 +397,7 @@ ms1≤ms2 {M} {N} = record { to = ms1≤ms2-to ; from = ms1≤ms2-from ; from∘
       → L —↠ N1
     trans (_ ∎) mn = mn
     trans (l —→⟨ x ⟩ _ ∎) mn = l —→⟨ x ⟩ mn
-    trans (l —→⟨ x ⟩ m2 —→⟨ x₁ ⟩ lm) mn = l —→⟨ x ⟩ (m2 —→⟨ x₁ ⟩ (trans lm mn ) )
+    trans (l —→⟨ x ⟩ m2 —→⟨ x₁ ⟩ lm) mn = l —→⟨ x ⟩ (m2 —→⟨ x₁ ⟩ (trans lm mn ))
 
   {-
   Case split.
@@ -731,26 +731,20 @@ And the final left hole has goal:
 Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m" ⦂ `ℕ ⊢
       plus ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
 ", which is exactly the "⊢plus".
+
+By the example of "⊢plus", we know that "S′" is better than "S", so we replaced them later.
+We find the code of helper function is not so long, then we just copy-paste and removed the helper function.
 -}
 ⊢mul : ∀ {Γ} → Γ ⊢ mul ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
-⊢mul {Γ} = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S ("m" ≠ "n")  Z)) ⊢zero helper)))
-  where
-  helper : Γ , "*" ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ , "m" ⦂ `ℕ , "n" ⦂ `ℕ , "m" ⦂ `ℕ ⊢
-      plus · ` "n" · (` "*" · ` "m" · ` "n") ⦂ `ℕ
-  helper = ⊢plus · (⊢` (S ("n" ≠ "m") Z)) · (⊢` (S ("*" ≠ "m") (S ("*" ≠ "n") (S ("*" ≠ "m") Z))) · (⊢` Z) · (⊢` (S  ("n" ≠ "m")  Z)))
+⊢mul {Γ} = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S′ Z)) ⊢zero (⊢plus · (⊢` (S′ Z)) · (⊢` (S′ (S′ (S′ Z))) · (⊢` Z) · (⊢` (S′  Z)))))))
   
 -- 747/PLFA exercise: MulCTyped (2 points)
 -- Show that your mulᶜ above is well-typed.
 {-
 Basically the same idea as the above exercise.
-Note that we should not refine goals like " "m" ≢  "n" ".
-Instead we should use things like " ("m" ≠ "n") " and refine the hole.
 -}
 ⊢mulᶜ : ∀ {Γ A} → Γ  ⊢ mulᶜ ⦂ Ch A ⇒ Ch A ⇒ Ch A
-⊢mulᶜ {Γ} {A} = ⊢ƛ (⊢ƛ (⊢ƛ (⊢ƛ helper)))
-  where
-  helper : Γ , "m" ⦂ Ch A , "n" ⦂ Ch A , "s" ⦂ A ⇒ A , "z" ⦂ A ⊢ ` "m" · (` "n" · ` "s") · ` "z" ⦂ A
-  helper = ⊢` (S ("m" ≠ "z") (S ("m" ≠ "s") (S ("m" ≠ "n") Z))) · (⊢` (S ("n" ≠ "z") (S ("n" ≠ "s") Z)) · (⊢` (S ("s" ≠ "z")   Z))) · (⊢` Z)
+⊢mulᶜ {Γ} {A} = ⊢ƛ (⊢ƛ (⊢ƛ (⊢ƛ (⊢` (S′ (S′ (S′ Z))) · (⊢` (S′ (S′ Z)) · (⊢` (S′ Z))) · (⊢` Z)))))
 
 -- Unicode:
 

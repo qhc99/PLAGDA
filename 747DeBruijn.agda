@@ -179,6 +179,21 @@ sucᶜ = ƛ `suc (# 0)
 
 -- PLFA exercise: write out the multiplication function
 -- in the new notation.
+{-
+⊢plus : ∀ {Γ} → Γ ⊢ plus ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
+⊢plus = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S′ Z)) (⊢` Z) (⊢suc (((⊢` (S′ (S′ (S′ Z)))) · (⊢` Z)) · (⊢` (S′ Z)))))))
+
+plus : ∀ {Γ} → Γ ⊢ `ℕ ⇒ `ℕ ⇒ `ℕ
+plus = μ ƛ ƛ (case (# 1) (# 0) (`suc (# 3 · # 0 · # 1)))
+
+⊢mul : ∀ {Γ} → Γ ⊢ mul ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
+⊢mul {Γ} = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S′ Z)) ⊢zero (⊢plus · (⊢` (S′ Z)) · (⊢` (S′ (S′ (S′ Z))) · (⊢` Z) · (⊢` (S′  Z)))))))
+
+By analogy, we transform "⊢mul" to "mul" like the way "⊢plus" was transformed into "plus".
+-}
+mul : ∀ {Γ} → Γ ⊢ `ℕ ⇒ `ℕ ⇒ `ℕ
+mul = μ ƛ ƛ (case (# 1) (`zero) (plus · (# 1) · ((# 3) · (# 0) · (# 1))))
+
 
 -- Helper for rename: extends a map from context Γ to Δ
 -- to one where both contexts are extended with B

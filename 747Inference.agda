@@ -561,6 +561,7 @@ lsucᶜ = ƛ "x" ⇒ `suc (` "x")
 l2+2ᶜ : Term
 l2+2ᶜ = lplusᶜ · ltwoᶜ · ltwoᶜ · lsucᶜ · `zero
 
+{-
 _ : toTerm⁻ ltwo ≡ two
 _ = refl
 
@@ -581,6 +582,7 @@ _ = refl
 
 _ : toTerm⁺ l2+2ᶜ ≡ 2+2ᶜ
 _ = refl
+-}
 
 -- 747 exercise: ontoTerm (3 points)
 -- Show that Synth and Inherit definitions are inclusive enough,
