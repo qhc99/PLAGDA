@@ -724,7 +724,7 @@ For the goal
 "
 To make code clean, we write a helper function in nested where.
 
-When we encounter goals like "..., n ⦂ `ℕ ⊢ n ⦂ A_1098", we just use "Z" and refine.
+When we encounter goals like "..., n ⦂ `ℕ ⊢ n ⦂ _A_1098", we just use "Z" and refine.
 To make the interactive process smooth, we can complete holes from right to left.
 And the final left hole has goal:
 "

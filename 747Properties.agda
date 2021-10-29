@@ -1392,6 +1392,16 @@ wttdgs m:a msn = unstuck (preserves m:a msn)
 -- PLFA exercise: give an ill-typed term that does get stuck.
 -- Reduction is deterministic, proved.
 
+{-
+irony function name...
+
+stuck : ∀ {∅ M A}
+  → ¬ (∅ ⊢ M ⦂ A)
+  → (Stuck M)
+proj₁ (stuck {c} {m} {a} x) x₁ = {!   !}
+proj₂ (stuck {c} {m} {a} x) x₁ = {!   !}
+-}
+
 -- Helper lemma (not needed if 'rewrite' used).
 
 cong₄ : ∀ {A B C D E : Set} (f : A → B → C → D → E)
