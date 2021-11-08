@@ -586,7 +586,7 @@ C-c C-a will give obvious wrong answer in this exercise.
 Use Class name and operator "." to resolve ambiguity.
 There is no way to convert "Inherit M" to "Synth M", so some cases in "decorate⁺" is absurdity.
 
-Basically it is manipulating building blocks under constraints of definitions to make a satisfied mapping 
+Basically it is manipulating building blocks under constraints of definitions to make a perfect mapping 
 and we definitly need some tests to prove the correctness of this exercise.
 We should only case split once since the case split will not end for some cases and 
 the solution is using recursion to avoid infinite split.
@@ -685,11 +685,65 @@ _ = refl
 -- that is, for every Term⁻ there is a plain term with inherit evidence
 -- that maps onto it, and similarly for Term⁺. Why is it not an isomorphism?
 
+Term⁻-to-Term : ∀ (t⁻ : Term⁻) → Term
+Term⁺-to-Term : ∀ (t⁺ : Term⁺) → Term
+
+Term⁻-to-Term (ƛ x ⇒ t⁻) = Term.ƛ_⇒_ x (Term⁻-to-Term t⁻)
+Term⁻-to-Term `zero = Term.`zero
+Term⁻-to-Term (`suc t⁻) = Term.`suc (Term⁻-to-Term t⁻)
+Term⁻-to-Term `case x [zero⇒ t⁻ |suc x₁ ⇒ t⁻₁ ] = Term.`case_[zero⇒_|suc_⇒_] (Term⁺-to-Term x) (Term⁻-to-Term t⁻) x₁ (Term⁻-to-Term t⁻₁)
+Term⁻-to-Term (μ x ⇒ t⁻) = Term.μ_⇒_ x (Term⁻-to-Term t⁻)
+Term⁻-to-Term (x ↑) = (Term⁺-to-Term x)
+
+Term⁺-to-Term (` x) = Term.`_ x
+Term⁺-to-Term (t⁺ · x) = Term._·_ (Term⁺-to-Term t⁺) (Term⁻-to-Term x)
+Term⁺-to-Term (x ↓ x₁) = Term._⦂_ (Term⁻-to-Term x) x₁
+
+
+Term⁻-to-Inherit : ∀ (t⁻ : Term⁻) → Inherit (Term⁻-to-Term t⁻)
+Term⁺-to-Synth : ∀ (t⁺ : Term⁺) → Synth (Term⁺-to-Term t⁺)
+
+Term⁻-to-Inherit (ƛ x ⇒ t⁻) = lam (Term⁻-to-Inherit t⁻)
+Term⁻-to-Inherit `zero = zer
+Term⁻-to-Inherit (`suc t⁻) = suc (Term⁻-to-Inherit t⁻)
+Term⁻-to-Inherit `case x [zero⇒ t⁻ |suc x₁ ⇒ t⁻₁ ] = Inherit.case (Term⁺-to-Synth x) (Term⁻-to-Inherit t⁻)  (Term⁻-to-Inherit t⁻₁)
+Term⁻-to-Inherit (μ x ⇒ t⁻) = mu (Term⁻-to-Inherit t⁻)
+Term⁻-to-Inherit (x ↑) = up (Term⁺-to-Synth x)
+
+Term⁺-to-Synth (` x) = var
+Term⁺-to-Synth (t⁺ · x) = Synth.app (Term⁺-to-Synth t⁺) (Term⁻-to-Inherit x)
+Term⁺-to-Synth (x ↓ x₁) = Synth.ann (Term⁻-to-Inherit x)
+
+
+decorate⁻-to-from : ∀ (t⁻ : Term⁻) → decorate⁻ (Term⁻-to-Term t⁻) (Term⁻-to-Inherit t⁻) ≡ t⁻
+decorate⁺-to-from : ∀ (t⁺ : Term⁺) → decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺) ≡ t⁺
+
+
+helper1 : ∀ (t⁺ : Term⁺) →  (Term⁺-to-Term t⁺) ≡ (Term⁻-to-Term (t⁺ ↑))
+helper1 = λ t⁺ → refl
+
+helper2 : ∀ (t⁺ : Term⁺) → (up (Term⁺-to-Synth t⁺)) ≡ (Term⁻-to-Inherit (t⁺ ↑))
+helper2 = λ t⁺ → refl
+
+decorate⁻-to-from (ƛ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
+decorate⁻-to-from `zero = refl
+decorate⁻-to-from (`suc t⁻) rewrite decorate⁻-to-from t⁻ = refl
+decorate⁻-to-from `case x [zero⇒ t⁻ |suc x₁ ⇒ t⁻₁ ] 
+  rewrite decorate⁺-to-from x | decorate⁻-to-from t⁻ | decorate⁻-to-from t⁻₁ = refl
+decorate⁻-to-from (μ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
+decorate⁻-to-from (x ↑) rewrite helper1 x | helper2 x = {!   !}
+
+decorate⁺-to-from (` x) = refl
+decorate⁺-to-from (t⁺ · x) rewrite decorate⁻-to-from x | decorate⁺-to-from t⁺ = refl
+decorate⁺-to-from (x ↓ x₁) rewrite decorate⁻-to-from x = refl
+
+
 ontoTerm⁻ : ∀ (t⁻ : Term⁻) → ∃[ t ] (∃[ i ] (decorate⁻ t i ≡ t⁻))
 ontoTerm⁺ : ∀ (t⁺ : Term⁺) → ∃[ t ] (∃[ s ] (decorate⁺ t s ≡ t⁺))
 
-ontoTerm⁻ = {!!}
-ontoTerm⁺ = {!!}
+ontoTerm⁻ t⁻ = ⟨ (Term⁻-to-Term t⁻) , ⟨ Term⁻-to-Inherit t⁻ , decorate⁻-to-from t⁻ ⟩ ⟩
+
+ontoTerm⁺ t⁺ =   ⟨ (Term⁺-to-Term t⁺) , ⟨ Term⁺-to-Synth t⁺ , decorate⁺-to-from t⁺ ⟩ ⟩
 
 {- 
   Unicode used in this chapter:
