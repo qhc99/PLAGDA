@@ -28,12 +28,14 @@ infix  9 S_
 infix  9 #_
 
 -- Types (third and fourth are new).
-
+-- add1
 data Type : Set where
   `ℕ    : Type
   _⇒_   : Type → Type → Type
   Nat   : Type
   _`×_  : Type → Type → Type
+  `⊤    : Type
+  `⊥   : Type
 
 -- Contexts (unchanged).
 
@@ -56,7 +58,7 @@ data _∋_ : Context → Type → Set where
 
 -- Types / type judgments
 -- (additions for primitive numbers and products)
-
+-- add2
 data _⊢_ : Context → Type → Set where
 
   -- variables
@@ -150,6 +152,13 @@ data _⊢_ : Context → Type → Set where
     → Γ , A , B ⊢ C
       --------------
     → Γ ⊢ C
+  
+  --⊤-I : Γ ⊢ `tt ⦂ `⊤
+  
+  case⊥ : ∀{Γ L A}
+    → Γ ⊢ L ⦂ `⊥ 
+    → Γ ⊢ case⊥ L [] ⦂ A
+  
 
 -- Abbreviating de Bruijn indices (unchanged)
 
@@ -253,7 +262,7 @@ _[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ N
   σ (S (S x))  =  ` x
 
 -- Values (additions for primitive numbers and products)
-
+--add3
 data Value : ∀ {Γ A} → Γ ⊢ A → Set where
 
   -- functions
@@ -290,7 +299,7 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
 -- Reduction (additions for all new features).
 
 infix 2 _—→_
-
+--add4
 data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   -- functions
@@ -464,7 +473,7 @@ data Progress {A} (M : ∅ ⊢ A) : Set where
       Value M
       ----------
     → Progress M
-
+-- add5
 progress : ∀ {A}
   → (M : ∅ ⊢ A)
     -----------
@@ -628,6 +637,7 @@ _ =
 -- For each section in the file, think whether something has to be added, and what.
 -- If you add constructors to an inductive datatype, loading the file
 -- will helpfully tell you what cases are missing in code using it, and where.
+
 
 -- PLFA exercise (STRETCH):
 -- double-subst :

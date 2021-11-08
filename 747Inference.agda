@@ -161,15 +161,31 @@ data _⊢_↓_ where
 -- 747/PLFA exercise: NatMul (1 point)
 -- Write the term for multiplication of natural numbers,
 -- as you did in Lambda, but this time using the definitions above.
+{-
+mul : Term
+mul =  μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+         case ` "m"
+           [zero⇒ `zero
+           |suc "m" ⇒ plus · ` "n" · (` "*" · ` "m" · ` "n") ]
 
+Copy the code of "plus" above and modify it according to "mul" in 747Lambda.
+To pass syntax check of "Term⁺" and "Term⁻", we need to use "↑" decorate according items.
+-}
 mul : Term⁺
-mul = {!!}
+mul = (μ "*" ⇒ ƛ "m" ⇒ ƛ "n" ⇒
+          `case (` "m") [zero⇒ `zero
+                        |suc "m" ⇒ plus · (` "n" ↑) · (` "*" · (` "m" ↑) · (` "n" ↑) ↑) ↑  ])
+            ↓ (`ℕ ⇒ `ℕ ⇒ `ℕ)
 
 -- 747/PLFA exercise: ChurchMul (1 point)
 -- Same as above, but for multiplication of Church numbers.
-
+{-
+Similar idea as above exercise.
+-}
 mulᶜ : Term⁺
-mulᶜ = {!!}
+mulᶜ = (ƛ "m" ⇒ ƛ "n" ⇒ ƛ "s" ⇒ ƛ "z" ⇒
+           ` "m" · ((` "m" · (` "s" ↑)) ↑) · (` "z" ↑) ↑)
+             ↓ (Ch ⇒ Ch ⇒ Ch)
 
 -- PLFA exercise: extend the rules to support products (from More)
 
@@ -505,32 +521,110 @@ data Inherit where
 
 -- 747 exercise: DecideBidirect (5 points)
 -- Implement the decision functions for Synth and Inherit.
-
+{-
+Basically we use with clause according to the signature of definition (constructor).
+Then a few cases can be solved directly by C-c C-a.
+For the remaining cases, after with clause, the all true cases can be solved directly by C-c C-a and
+for the other cases in the with clause we should use pattern matching of lambda to get evidence of ¬.
+Use "up" when no direct constructor available.
+Then all cases can be solved by C-c C-a.
+-}
 isSynth : (t : Term) → Dec (Synth t)
 isInherit : (t : Term) → Dec (Inherit t)
 
-isSynth = {!!}
-isInherit = {!!}
+isSynth (` x) = yes var
+isSynth (ƛ x ⇒ t) = no (λ ())
+isSynth (t · t₁) 
+  with (isSynth t) |  (isInherit t₁)
+... | .true because ofʸ p | .true because ofʸ p₁ = yes (app p p₁)
+... | .true because ofʸ p | .false because ofⁿ ¬p = false because (ofⁿ (λ { (app a b) → ¬p b}))
+... | .false because ofⁿ ¬p | .true because ofʸ p = false because (ofⁿ (λ { (app a b) → ¬p a}))
+... | .false because ofⁿ ¬p | .false because ofⁿ ¬p₁ = false because (ofⁿ (λ { (app a b) → ¬p₁ b}))
+isSynth `zero = no (λ ())
+isSynth (`suc t) = no (λ ())
+isSynth `case t [zero⇒ t₁ |suc x ⇒ t₂ ] = no (λ ())
+isSynth (μ x ⇒ t) = no (λ ())
+isSynth (t ⦂ x) with isInherit t
+... | .true because ofʸ p = yes (ann p)
+... | .false because ofⁿ ¬p = false because (ofⁿ (λ {(ann a) → ¬p a }))
+
+isInherit (` x) = yes (up var)
+isInherit (ƛ x ⇒ t) with isInherit t 
+... | true because ofʸ p = yes (lam p)
+... | false because ofⁿ ¬p = false because ofⁿ (λ {(lam a) → ¬p a })
+isInherit (t · t₁) with (isSynth t) |  (isInherit t₁)
+... | .true because ofʸ p | .true because ofʸ p₁ = yes (up (app p p₁))
+... | .true because ofʸ p | .false because ofⁿ ¬p = false because ofⁿ (λ {(up (app a b)) →  ¬p b})
+... | .false because ofⁿ ¬p | .true because ofʸ p = false because ofⁿ (λ {(up (app a b)) →  ¬p a})
+... | .false because ofⁿ ¬p | .false because ofⁿ ¬p₁ = false because ofⁿ (λ {(up (app a b)) →  ¬p₁ b})
+isInherit `zero = yes zer
+isInherit (`suc t) with isInherit t 
+... | true because ofʸ p = yes (suc p)
+... | false because ofⁿ ¬p = false because ofⁿ (λ {(suc a) → ¬p a })
+isInherit `case t [zero⇒ t₁ |suc x ⇒ t₂ ] with isSynth t | isInherit t₁ | isInherit t₂ 
+... | .true because ofʸ p | .true because ofʸ p₁ | .true because ofʸ p₂ = yes (case p p₁ p₂)
+... | .true because ofʸ p | .true because ofʸ p₁ | .false because ofⁿ ¬p = false because (ofⁿ (λ {(case a b c) → ¬p c}))
+... | .true because ofʸ p | .false because ofⁿ ¬p | .true because ofʸ p₁ = false because (ofⁿ (λ {(case a b c) → ¬p b}))
+... | .true because ofʸ p | .false because ofⁿ ¬p | .false because ofⁿ ¬p₁ = false because (ofⁿ (λ {(case a b c) → ¬p₁ c}))
+... | .false because ofⁿ ¬p | .true because ofʸ p | .true because ofʸ p₁ = false because (ofⁿ (λ {(case a b c) → ¬p a}))
+... | .false because ofⁿ ¬p | .true because ofʸ p | .false because ofⁿ ¬p₁ = false because (ofⁿ (λ{(case a b c) → ¬p₁ c}))
+... | .false because ofⁿ ¬p | .false because ofⁿ ¬p₁ | .true because ofʸ p = false because (ofⁿ (λ {(case a b c) → ¬p₁ b}))
+... | .false because ofⁿ ¬p | .false because ofⁿ ¬p₁ | .false because ofⁿ ¬p₂ = false because (ofⁿ (λ {(case a b c) → ¬p₂ c}))
+isInherit (μ x ⇒ t) with isInherit t 
+... | true because ofʸ p = yes (mu p)
+... | false because ofⁿ ¬p = false because (ofⁿ (λ {(mu a) → ¬p a }))
+isInherit (t ⦂ x) with isInherit t
+... | true because ofʸ p = yes (up (ann p))
+... | false because ofⁿ ¬p = false because (ofⁿ (λ {(up (ann a)) →  ¬p a}))
 
 -- 747 exercise: Decorate (3 points)
 -- Implement the mutually-recursive decorators.
+{-
+We need to ensure exactly one-to-one mapping.
+We write code by frequently checking signature of definitions.
+C-c C-a will give obvious wrong answer in this exercise.
+Use Class name and operator "." to resolve ambiguity.
+There is no way to convert "Inherit M" to "Synth M", so some cases in "decorate⁺" is absurdity.
 
+Basically it is manipulating building blocks under constraints of definitions to make a satisfied mapping 
+and we definitly need some tests to prove the correctness of this exercise.
+We should only case split once since the case split will not end for some cases and 
+the solution is using recursion to avoid infinite split.
+-}
 decorate⁻ : (t : Term) → Inherit t → Term⁻
 decorate⁺ : (t : Term) → Synth t → Term⁺
 
-decorate⁻ = {!!}
-decorate⁺ = {!!}
+decorate⁻ (` x) = λ _ → ` x ↑
+decorate⁻ (ƛ x ⇒ t) = λ {(lam it) → Term⁻.ƛ_⇒_ x (decorate⁻ t it)} 
+decorate⁻ (t · t₁) = λ { (up (app st it₁)) → (Term⁺._·_ (decorate⁺ t st) (decorate⁻ t₁ it₁)) ↑  }
+decorate⁻ `zero = λ _ → Term⁻.`zero
+decorate⁻ (`suc t) = λ {(suc it) → Term⁻.`suc (decorate⁻ t it) }
+decorate⁻ `case t [zero⇒ t₁ |suc x ⇒ t₂ ] = λ {(case st it₁ it₂) → 
+  Term⁻.`case_[zero⇒_|suc_⇒_] (decorate⁺ t st) (decorate⁻ t₁ it₁) x (decorate⁻ t₂ it₂) }
+decorate⁻ (μ x ⇒ t) = λ {(mu it) → Term⁻.μ_⇒_ x (decorate⁻ t it)}
+decorate⁻ (t ⦂ x) = λ {(up (ann it)) →  ((decorate⁻ t it) ↓ x) ↑}
+
+decorate⁺ (` x) = λ _ → ` x
+decorate⁺ (ƛ x ⇒ t) = λ ()
+decorate⁺ (t · t₁) = λ {(app st it₁) → Term⁺._·_ (decorate⁺ t st) (decorate⁻ t₁ it₁) } 
+decorate⁺ `zero = λ ()
+decorate⁺ (`suc t) = λ ()
+decorate⁺ `case t [zero⇒ t₁ |suc x ⇒ t₂ ] = λ ()
+decorate⁺ (μ x ⇒ t) = λ ()
+decorate⁺ (t ⦂ x) = λ {(ann it) →  ((decorate⁻ t it) ↓ x)}
 
 -- 747 exercise: ToTerm (2 points)
 -- Use the proof by reflection idea as before to
 -- automatically compute the supporting proofs for literal terms
 -- and hide them away.
-
+{-
+Use "toWitness" to get evidence, which is the second argument of decorate functions. 
+-}
 toTerm⁺ : (t : Term) → {i : True (isSynth t)} → Term⁺
-toTerm⁺ = {!!}
+toTerm⁺ t {i} = decorate⁺ t (toWitness i)
 
 toTerm⁻ : (t : Term) → {i : True (isInherit t)} → Term⁻
-toTerm⁻ = {!!}
+toTerm⁻ t {i} = decorate⁻ t (toWitness i)
 
 -- Examples from Lambda which serve as unit tests for the above.
 
@@ -561,7 +655,8 @@ lsucᶜ = ƛ "x" ⇒ `suc (` "x")
 l2+2ᶜ : Term
 l2+2ᶜ = lplusᶜ · ltwoᶜ · ltwoᶜ · lsucᶜ · `zero
 
-{-
+
+
 _ : toTerm⁻ ltwo ≡ two
 _ = refl
 
@@ -582,7 +677,8 @@ _ = refl
 
 _ : toTerm⁺ l2+2ᶜ ≡ 2+2ᶜ
 _ = refl
--}
+
+
 
 -- 747 exercise: ontoTerm (3 points)
 -- Show that Synth and Inherit definitions are inclusive enough,
@@ -602,4 +698,4 @@ ontoTerm⁺ = {!!}
   ↑  U+2191:  UPWARDS ARROW (\u)
   ∥  U+2225:  PARALLEL TO (\||)
 
--}
+-}  
