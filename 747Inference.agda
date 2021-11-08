@@ -718,12 +718,10 @@ Term⁺-to-Synth (x ↓ x₁) = Synth.ann (Term⁻-to-Inherit x)
 decorate⁻-to-from : ∀ (t⁻ : Term⁻) → decorate⁻ (Term⁻-to-Term t⁻) (Term⁻-to-Inherit t⁻) ≡ t⁻
 decorate⁺-to-from : ∀ (t⁺ : Term⁺) → decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺) ≡ t⁺
 
-
-helper1 : ∀ (t⁺ : Term⁺) →  (Term⁺-to-Term t⁺) ≡ (Term⁻-to-Term (t⁺ ↑))
-helper1 = λ t⁺ → refl
-
-helper2 : ∀ (t⁺ : Term⁺) → (up (Term⁺-to-Synth t⁺)) ≡ (Term⁻-to-Inherit (t⁺ ↑))
-helper2 = λ t⁺ → refl
+helper : ∀ (t⁺ : Term⁺) →  decorate⁻ (Term⁺-to-Term t⁺) (up (Term⁺-to-Synth t⁺)) ≡ (decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺)) ↑
+helper (` x) = refl
+helper (t⁺ · x) = refl
+helper (x ↓ x₁) = refl
 
 decorate⁻-to-from (ƛ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
 decorate⁻-to-from `zero = refl
@@ -731,7 +729,8 @@ decorate⁻-to-from (`suc t⁻) rewrite decorate⁻-to-from t⁻ = refl
 decorate⁻-to-from `case x [zero⇒ t⁻ |suc x₁ ⇒ t⁻₁ ] 
   rewrite decorate⁺-to-from x | decorate⁻-to-from t⁻ | decorate⁻-to-from t⁻₁ = refl
 decorate⁻-to-from (μ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
-decorate⁻-to-from (x ↑) rewrite helper1 x | helper2 x = {!   !}
+decorate⁻-to-from (x ↑) rewrite (helper x) | decorate⁺-to-from x = refl
+
 
 decorate⁺-to-from (` x) = refl
 decorate⁺-to-from (t⁺ · x) rewrite decorate⁻-to-from x | decorate⁺-to-from t⁺ = refl
