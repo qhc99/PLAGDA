@@ -583,7 +583,7 @@ isInherit (t ⦂ x) with isInherit t
 We need to ensure exactly one-to-one mapping.
 We write code by frequently checking signature of definitions.
 C-c C-a will give obvious wrong answer in this exercise.
-Use Class name and operator "." to resolve ambiguity.
+Use class name and operator "." to resolve ambiguity.
 There is no way to convert "Inherit M" to "Synth M", so some cases in "decorate⁺" is absurdity.
 
 Basically it is manipulating building blocks under constraints of definitions to make a perfect mapping 
@@ -684,7 +684,14 @@ _ = refl
 -- Show that Synth and Inherit definitions are inclusive enough,
 -- that is, for every Term⁻ there is a plain term with inherit evidence
 -- that maps onto it, and similarly for Term⁺. Why is it not an isomorphism?
+{-
+We need three kind of functions for the ∃ syntax: mapping Term⁺ and Term⁻ to Term, 
+mapping Term⁻ to Inherit and Term⁺ to Synth and to-from property of decorate and the first two mapping.
 
+The implementation has similar idea (perfect one-by-one matching and mutual recursion) as 
+exercises before.
+The code is unusually long because we need to deal with every specific cases of Term.
+-}
 Term⁻-to-Term : ∀ (t⁻ : Term⁻) → Term
 Term⁺-to-Term : ∀ (t⁺ : Term⁺) → Term
 
@@ -698,7 +705,7 @@ Term⁻-to-Term (x ↑) = (Term⁺-to-Term x)
 Term⁺-to-Term (` x) = Term.`_ x
 Term⁺-to-Term (t⁺ · x) = Term._·_ (Term⁺-to-Term t⁺) (Term⁻-to-Term x)
 Term⁺-to-Term (x ↓ x₁) = Term._⦂_ (Term⁻-to-Term x) x₁
-
+------------------------------------------------------------------------------------------
 
 Term⁻-to-Inherit : ∀ (t⁻ : Term⁻) → Inherit (Term⁻-to-Term t⁻)
 Term⁺-to-Synth : ∀ (t⁺ : Term⁺) → Synth (Term⁺-to-Term t⁺)
@@ -713,15 +720,16 @@ Term⁻-to-Inherit (x ↑) = up (Term⁺-to-Synth x)
 Term⁺-to-Synth (` x) = var
 Term⁺-to-Synth (t⁺ · x) = Synth.app (Term⁺-to-Synth t⁺) (Term⁻-to-Inherit x)
 Term⁺-to-Synth (x ↓ x₁) = Synth.ann (Term⁻-to-Inherit x)
-
-
-decorate⁻-to-from : ∀ (t⁻ : Term⁻) → decorate⁻ (Term⁻-to-Term t⁻) (Term⁻-to-Inherit t⁻) ≡ t⁻
-decorate⁺-to-from : ∀ (t⁺ : Term⁺) → decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺) ≡ t⁺
+------------------------------------------------------------------------------------------
 
 helper : ∀ (t⁺ : Term⁺) →  decorate⁻ (Term⁺-to-Term t⁺) (up (Term⁺-to-Synth t⁺)) ≡ (decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺)) ↑
 helper (` x) = refl
 helper (t⁺ · x) = refl
 helper (x ↓ x₁) = refl
+------------------------------------------------------------------------------------------
+
+decorate⁻-to-from : ∀ (t⁻ : Term⁻) → decorate⁻ (Term⁻-to-Term t⁻) (Term⁻-to-Inherit t⁻) ≡ t⁻
+decorate⁺-to-from : ∀ (t⁺ : Term⁺) → decorate⁺ (Term⁺-to-Term t⁺) (Term⁺-to-Synth t⁺) ≡ t⁺
 
 decorate⁻-to-from (ƛ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
 decorate⁻-to-from `zero = refl
@@ -731,17 +739,15 @@ decorate⁻-to-from `case x [zero⇒ t⁻ |suc x₁ ⇒ t⁻₁ ]
 decorate⁻-to-from (μ x ⇒ t⁻) rewrite decorate⁻-to-from t⁻ = refl
 decorate⁻-to-from (x ↑) rewrite (helper x) | decorate⁺-to-from x = refl
 
-
 decorate⁺-to-from (` x) = refl
 decorate⁺-to-from (t⁺ · x) rewrite decorate⁻-to-from x | decorate⁺-to-from t⁺ = refl
 decorate⁺-to-from (x ↓ x₁) rewrite decorate⁻-to-from x = refl
-
+------------------------------------------------------------------------------------------
 
 ontoTerm⁻ : ∀ (t⁻ : Term⁻) → ∃[ t ] (∃[ i ] (decorate⁻ t i ≡ t⁻))
 ontoTerm⁺ : ∀ (t⁺ : Term⁺) → ∃[ t ] (∃[ s ] (decorate⁺ t s ≡ t⁺))
 
 ontoTerm⁻ t⁻ = ⟨ (Term⁻-to-Term t⁻) , ⟨ Term⁻-to-Inherit t⁻ , decorate⁻-to-from t⁻ ⟩ ⟩
-
 ontoTerm⁺ t⁺ =   ⟨ (Term⁺-to-Term t⁺) , ⟨ Term⁺-to-Synth t⁺ , decorate⁺-to-from t⁺ ⟩ ⟩
 
 {- 
