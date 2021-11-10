@@ -28,14 +28,14 @@ infix  9 S_
 infix  9 #_
 
 -- Types (third and fourth are new).
--- add1
+
 data Type : Set where
   `ℕ    : Type
   _⇒_   : Type → Type → Type
   Nat   : Type
   _`×_  : Type → Type → Type
-  `⊤    : Type
   `⊥   : Type
+  _`⊎_  : Type → Type → Type
 
 -- Contexts (unchanged).
 
@@ -55,10 +55,10 @@ data _∋_ : Context → Type → Set where
     → Γ ∋ B
       ---------
     → Γ , A ∋ B
-
+-- Typing
 -- Types / type judgments
 -- (additions for primitive numbers and products)
--- add2
+
 data _⊢_ : Context → Type → Set where
 
   -- variables
@@ -153,11 +153,15 @@ data _⊢_ : Context → Type → Set where
       --------------
     → Γ ⊢ C
   
-  --⊤-I : Γ ⊢ `tt ⦂ `⊤
-  
-  case⊥ : ∀{Γ L A}
-    → Γ ⊢ L ⦂ `⊥ 
-    → Γ ⊢ case⊥ L [] ⦂ A
+  {-
+  We see how the typing rule of "Alternative formulation of products" is transformed 
+  into "case×" above and we get "case⊥" by analogy.
+  It means we can get any type if we have type "Empty".
+  -}
+  case⊥ : ∀ {Γ} {A : Type}
+    → Γ ⊢ `⊥
+    ---------
+    → Γ ⊢ A
   
 
 -- Abbreviating de Bruijn indices (unchanged)
@@ -208,6 +212,7 @@ rename ρ `⟨ M , N ⟩     =  `⟨ rename ρ M , rename ρ N ⟩
 rename ρ (`proj₁ L)     =  `proj₁ (rename ρ L)
 rename ρ (`proj₂ L)     =  `proj₂ (rename ρ L)
 rename ρ (case× L M)    =  case× (rename ρ L) (rename (ext (ext ρ)) M)
+rename ρ (case⊥ x) = case⊥ (rename ρ x) -- C-c C-a 
 
 -- Substitution (new cases in subst).
 
@@ -230,6 +235,7 @@ subst σ `⟨ M , N ⟩     =  `⟨ subst σ M , subst σ N ⟩
 subst σ (`proj₁ L)     =  `proj₁ (subst σ L)
 subst σ (`proj₂ L)     =  `proj₂ (subst σ L)
 subst σ (case× L M)    =  case× (subst σ L) (subst (exts (exts σ)) M)
+subst σ (case⊥ x) = case⊥ (subst σ x) -- C-c C-a 
 
 -- Single substitution (unchanged)
 
@@ -262,7 +268,7 @@ _[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ N
   σ (S (S x))  =  ` x
 
 -- Values (additions for primitive numbers and products)
---add3
+
 data Value : ∀ {Γ A} → Γ ⊢ A → Set where
 
   -- functions
@@ -299,7 +305,7 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
 -- Reduction (additions for all new features).
 
 infix 2 _—→_
---add4
+
 data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   -- functions
@@ -423,7 +429,13 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     → Value W
       ----------------------------------
     → case× `⟨ V , W ⟩ M —→ M [ V ][ W ]
-
+  
+  -- We need to get implicit argument "Γ" "A" for "case⊥" to suppress warning of "—→" in the last line.
+  ξ-case⊥ : ∀ {Γ A} {L L′ : Γ ⊢ `⊥}
+    → L —→ L′
+      --------------------
+    → case⊥ {Γ} {A} L —→ case⊥ {Γ} {A} L′
+  
 -- Reflexive/transitive closure (unchanged).
 
 infix  2 _—↠_
@@ -473,7 +485,7 @@ data Progress {A} (M : ∅ ⊢ A) : Set where
       Value M
       ----------
     → Progress M
--- add5
+
 progress : ∀ {A}
   → (M : ∅ ⊢ A)
     -----------
@@ -517,6 +529,19 @@ progress (`proj₂ L) with progress L
 progress (case× L M) with progress L
 ...    | step L—→L′                         =  step (ξ-case× L—→L′)
 ...    | done (V-⟨ VM , VN ⟩)               =  step (β-case× VM VN)
+progress (case⊥ M) with progress M
+... | step x = step (ξ-case⊥ x) -- C-c C-a
+
+{-
+to⊎⊥ : ∀ {A : `⊥} →  ∅ ⊢ A ⇒ A `⊎ `⊥
+to⊎⊥ = ƛ x ⇒ `inj₁ x
+
+from⊎⊥ : ∀ {A : `⊥} →   ∅ ⊢ A `⊎ `⊥ ⇒ A
+from⊎⊥ = ƛ z ⇒ case⊎ z
+                 [inj₁ x ⇒ x
+                 |inj₂ y ⇒ case⊥ y
+                             [] ]
+-}
 
 -- Evaluation (unchanged).
 
@@ -560,8 +585,9 @@ eval (gas (suc m)) L with progress L
 cube : ∅ ⊢ Nat ⇒ Nat
 cube = ƛ (# 0 `* # 0 `* # 0)
 
+{-
 _ : cube · con 2 —↠ con 8
-_ = 
+_ =
   begin
     cube · con 2
   —→⟨ β-ƛ V-con ⟩
@@ -571,6 +597,7 @@ _ =
   —→⟨ δ-* ⟩
     con 8
   ∎
+-}
 
 exp10 : ∅ ⊢ Nat ⇒ Nat
 exp10 = ƛ (`let (# 0 `* # 0)
@@ -578,6 +605,7 @@ exp10 = ƛ (`let (# 0 `* # 0)
               (`let (# 0 `* # 2)
                 (# 0 `* # 0))))
 
+{-
 _ : exp10 · con 2 —↠ con 1024
 _ =
   begin
@@ -599,10 +627,12 @@ _ =
   —→⟨ δ-* ⟩
     con 1024
   ∎
+-}
 
 swap× : ∀ {A B} → ∅ ⊢ A `× B ⇒ B `× A
 swap× = ƛ `⟨ `proj₂ (# 0) , `proj₁ (# 0) ⟩
 
+{-
 _ : swap× · `⟨ con 42 , `zero ⟩ —↠ `⟨ `zero , con 42 ⟩
 _ =
   begin
@@ -614,10 +644,12 @@ _ =
   —→⟨ ξ-⟨,⟩₂ V-zero (β-proj₁ V-con V-zero) ⟩
     `⟨ `zero , con 42 ⟩
   ∎
+-}
 
 swap×-case : ∀ {A B} → ∅ ⊢ A `× B ⇒ B `× A
 swap×-case = ƛ case× (# 0) `⟨ # 0 , # 1 ⟩
 
+{-
 _ : swap×-case · `⟨ con 42 , `zero ⟩ —↠ `⟨ `zero , con 42 ⟩
 _ =
   begin
@@ -627,6 +659,7 @@ _ =
    —→⟨ β-case× V-con V-zero ⟩
      `⟨ `zero , con 42 ⟩
    ∎
+-}
 
 -- 747/PLFA exercise: SumsEmpty (10 points)
 -- Add sums and the empty type to the above, using the syntax and rules
@@ -638,9 +671,38 @@ _ =
 -- If you add constructors to an inductive datatype, loading the file
 -- will helpfully tell you what cases are missing in code using it, and where.
 
+{-
+_[_][_] : ∀ {Γ A B C}
+  → Γ , A , B ⊢ C
+  → Γ ⊢ A
+  → Γ ⊢ B
+    ---------------
+  → Γ ⊢ C
 
+_[_] : ∀ {Γ A B}
+  → Γ , A ⊢ B
+  → Γ ⊢ A
+  ------------
+  → Γ ⊢ B
+
+rename : ∀ {Γ Δ}
+  → (∀ {A} → Γ ∋ A → Δ ∋ A)
+    -----------------------
+  → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
+
+S_ : ∀ {Γ A B}
+  → Γ ∋ B
+    ---------
+  → Γ , A ∋ B
+
+subst : ∀ {Γ Δ} → (∀ {C} → Γ ∋ C → Δ ⊢ C) → (∀ {C} → Γ ⊢ C → Δ ⊢ C)
+
+subst (747More.σ N V W) N ≡
+subst (747More.σ (subst (747More.σ N (rename S_ W)) N) V)
+(subst (747More.σ N (rename S_ W)) N)
+-}
 -- PLFA exercise (STRETCH):
--- double-subst :
---  ∀ {Γ} {A B C} {V : Γ ⊢ A} {W : Γ ⊢ B} {N : Γ , A , B ⊢ C} →
---    N [ V ][ W ] ≡ (N [ rename S_ W ]) [ V ]
-
+double-subst :
+  ∀ {Γ} {A B C} {V : Γ ⊢ A} {W : Γ ⊢ B} {N : Γ , A , B ⊢ C} →
+    N [ V ][ W ] ≡ (N [ rename S_ W ]) [ V ]
+double-subst {Γ} {A} {B} {C} {V} {W} {N} = {!   !} 
