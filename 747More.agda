@@ -3,7 +3,7 @@ module 747More where
 -- Libraries.
 
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; refl; cong; cong-app ;cong₂)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat using (ℕ; zero; suc; _*_; _<_; _≤?_; z≤n; s≤s)
 open import Relation.Nullary using (¬_)
@@ -36,6 +36,9 @@ data Type : Set where
   _`×_  : Type → Type → Type
   `⊥   : Type
   _`⊎_  : Type → Type → Type
+  `⊤    : Type
+  `⊤′    : Type
+  `List_ : Type → Type
 
 -- Contexts (unchanged).
 
@@ -158,9 +161,38 @@ data _⊢_ : Context → Type → Set where
   into "case×" above and we get "case⊥" by analogy.
   It means we can get any type if we have type "Empty".
   -}
-  case⊥ : ∀ {Γ} {A : Type}
+  case⊥ : ∀ {Γ A}
     → Γ ⊢ `⊥
     ---------
+    → Γ ⊢ A
+
+  `inj₁ : ∀ {Γ A B}
+    → Γ ⊢ A
+    → Γ ⊢ A `⊎ B
+
+  `inj₂ : ∀ {Γ A B}
+    → Γ ⊢ B
+    → Γ ⊢ A `⊎ B
+
+  case⊎ : ∀ {Γ A B C}
+    → Γ ⊢ A `⊎ B
+    → Γ , A ⊢ C
+    → Γ , B ⊢ C
+      ---------
+    → Γ ⊢ C
+
+  `tt : ∀ {Γ}
+    ---------
+    → Γ ⊢ `⊤
+
+  `tt′ : ∀ {Γ}
+    ---------
+    → Γ ⊢ `⊤′ 
+
+  case⊤ : ∀{Γ A}
+    → Γ ⊢ `⊤′ 
+    → Γ ⊢ A
+    -------
     → Γ ⊢ A
   
 
@@ -213,6 +245,28 @@ rename ρ (`proj₁ L)     =  `proj₁ (rename ρ L)
 rename ρ (`proj₂ L)     =  `proj₂ (rename ρ L)
 rename ρ (case× L M)    =  case× (rename ρ L) (rename (ext (ext ρ)) M)
 rename ρ (case⊥ x) = case⊥ (rename ρ x) -- C-c C-a 
+rename ρ (`inj₁ x) = `inj₁ (rename ρ x)
+rename ρ (`inj₂ x) = `inj₂ (rename ρ x)
+rename ρ (case⊎ x x₁ x₂) = case⊎ (rename ρ x) (rename (ext ρ) x₁) (rename (ext ρ) x₂)
+rename ρ `tt = `tt
+rename ρ `tt′ = `tt′
+rename ρ (case⊤ x x₁) = rename ρ x₁
+{-
+  For above case:
+  Goal: Δ ⊢ A
+  
+  Type Inference:
+  (rename ρ x) : Δ ⊢ (A₁ `⊎ B)
+  (rename (ext ρ) x₁) : Δ , A₁ ⊢ A
+  (rename (ext ρ) x₂) : Δ , B ⊢ A
+
+  To get goal, we need to use "case⊎", which require input types "Δ ⊢ (A₁ `⊎ B)", "Δ , A₁ ⊢ A"
+  and "Δ , B ⊢ A".
+  By the cases above, we should use "rename" and "ext" to get required types.
+  We start by rename, if the type inference is incorrect or failed, we just "ext ρ".
+  Then just a few trys we find the answer.
+-}
+
 
 -- Substitution (new cases in subst).
 
@@ -236,7 +290,12 @@ subst σ (`proj₁ L)     =  `proj₁ (subst σ L)
 subst σ (`proj₂ L)     =  `proj₂ (subst σ L)
 subst σ (case× L M)    =  case× (subst σ L) (subst (exts (exts σ)) M)
 subst σ (case⊥ x) = case⊥ (subst σ x) -- C-c C-a 
-
+subst σ (`inj₁ x) = `inj₁ (subst σ x)
+subst σ (`inj₂ x) = `inj₂ (subst σ x)
+subst σ (case⊎ x x₁ x₂) = case⊎ (subst σ x) (subst (exts σ) x₁) (subst (exts σ) x₂) -- similar idea as "rename".
+subst σ `tt = `tt
+subst σ `tt′ = `tt′
+subst σ (case⊤ x x₁) = subst σ x₁
 -- Single substitution (unchanged)
 
 _[_] : ∀ {Γ A B}
@@ -260,12 +319,12 @@ _[_][_] : ∀ {Γ A B C}
     ---------------
   → Γ ⊢ C
 
-_[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ N
+_[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ′ N
   where
-  σ : ∀ {C} → Γ , A , B ∋ C → Γ ⊢ C
-  σ Z          =  W
-  σ (S Z)      =  V
-  σ (S (S x))  =  ` x
+  σ′ : ∀ {C} → Γ , A , B ∋ C → Γ ⊢ C
+  σ′ Z          =  W
+  σ′ (S Z)      =  V
+  σ′ (S (S x))  =  ` x
 
 -- Values (additions for primitive numbers and products)
 
@@ -301,6 +360,23 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
     → Value W
       ----------------
     → Value `⟨ V , W ⟩
+
+  -- Note the third implicit argument of "`inj₁"
+  V-inj₁ : ∀ {Γ A B} {V : Γ ⊢ A}
+    → Value V
+      ---------------
+    → Value (`inj₁ {Γ} {A} {B} V) 
+
+  V-inj₂ : ∀ {Γ A B} {W : Γ ⊢ B}
+    → Value W
+      ---------------
+    → Value (`inj₂ {Γ} {A} {B} W) 
+
+  V-⊤ : ∀ {Γ} 
+    → Value (`tt {Γ})
+
+  V-⊤′ : ∀ {Γ} 
+    → Value (`tt′ {Γ})
 
 -- Reduction (additions for all new features).
 
@@ -433,8 +509,40 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   -- We need to get implicit argument "Γ" "A" for "case⊥" to suppress warning of "—→" in the last line.
   ξ-case⊥ : ∀ {Γ A} {L L′ : Γ ⊢ `⊥}
     → L —→ L′
-      --------------------
+      -------------------------------------
     → case⊥ {Γ} {A} L —→ case⊥ {Γ} {A} L′
+
+  ξ-inj₁ : ∀{Γ A B} {M M′ : Γ ⊢ A}
+    → M —→ M′
+      -------------------------------------------
+    → `inj₁ {Γ} {A} {B} M —→ `inj₁ {Γ} {A} {B} M′ 
+
+  ξ-inj₂ : ∀{Γ A B} {N N′ : Γ ⊢ B}
+    → N —→ N′
+      -------------------------------------------
+    → `inj₂ {Γ} {A} {B} N —→ `inj₂ {Γ} {A} {B} N′
+
+  ξ-case⊎ : ∀ {Γ A B C I1 I2} {L L′ : Γ ⊢ A `⊎ B}
+    → L —→ L′
+        -------------------------------------------------------------
+    → case⊎ {Γ} {A} {B} {C} L I1 I2 —→ case⊎ {Γ} {A} {B} {C} L′ I1 I2
+
+  β-inj₁ : ∀{Γ A B C M N V}
+      ----------------------------------------------
+    → case⊎ {Γ} {A} {B} {C} (`inj₁ V) M N —→ M [ V ]
+
+  β-inj₂ : ∀{Γ A B C M N W}
+      ----------------------------------------------
+    → case⊎ {Γ} {A} {B} {C} (`inj₂ W) M N —→ N [ W ]
+
+  ξ-case⊤ : ∀{Γ A M} {L L′ : Γ ⊢ `⊤′}
+    → L —→ L′
+      ----------------------------------------
+    → case⊤ {Γ} {A} L M —→ case⊤ {Γ} {A} L′ M
+
+  β-case⊤ : ∀{Γ A M} 
+      -----------------------------
+    → (case⊤ {Γ} {A} `tt′ M ) —→  M
   
 -- Reflexive/transitive closure (unchanged).
 
@@ -471,6 +579,9 @@ V¬—→ : ∀ {Γ A} {M N : Γ ⊢ A}
 V¬—→ (V-suc VM) (ξ-suc M—→M′)     =  V¬—→ VM M—→M′
 V¬—→ V-⟨ VM , _ ⟩ (ξ-⟨,⟩₁ M—→M′)    =  V¬—→ VM M—→M′
 V¬—→ V-⟨ _ , VN ⟩ (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—→N′
+V¬—→ (V-inj₁ x) (ξ-inj₁ x₁) = V¬—→ x x₁
+V¬—→ (V-inj₂ x) (ξ-inj₂ x₁) = V¬—→ x x₁
+
 
 -- Progress (new cases in theorem).
 
@@ -531,8 +642,29 @@ progress (case× L M) with progress L
 ...    | done (V-⟨ VM , VN ⟩)               =  step (β-case× VM VN)
 progress (case⊥ M) with progress M
 ... | step x = step (ξ-case⊥ x) -- C-c C-a
+progress (`inj₁ M) with progress M
+... | step x = step (ξ-inj₁ x)
+... | done x = done (V-inj₁ x)
+progress (`inj₂ M) with progress M
+... | step x = step (ξ-inj₂ x)
+... | done x = done (V-inj₂ x)
+progress (case⊎ M M₁ M₂) with progress M
+... | step x = step (ξ-case⊎ x)
+... | done (V-inj₁ x) = step β-inj₁ -- case split then solved by C-c C-a
+... | done (V-inj₂ x) = step β-inj₂
+progress `tt = done V-⊤
+progress `tt′ = done V-⊤′
+progress (case⊤ x x₁) with progress x 
+... | step x₂ = step (ξ-case⊤ x₂)
+... | done V-⊤′ = step β-case⊤
+
 
 {-
+swap⊎ : ∀ {A B} →  ∅ ⊢ A `⊎ B ⇒ B `⊎ A
+swap⊎ = ƛ z ⇒ case⊎ z
+                [inj₁ x ⇒ `inj₂ x
+                |inj₂ y ⇒ `inj₁ y ]
+
 to⊎⊥ : ∀ {A : `⊥} →  ∅ ⊢ A ⇒ A `⊎ `⊥
 to⊎⊥ = ƛ x ⇒ `inj₁ x
 
@@ -542,6 +674,7 @@ from⊎⊥ = ƛ z ⇒ case⊎ z
                  |inj₂ y ⇒ case⊥ y
                              [] ]
 -}
+
 
 -- Evaluation (unchanged).
 
@@ -672,37 +805,22 @@ _ =
 -- will helpfully tell you what cases are missing in code using it, and where.
 
 {-
-_[_][_] : ∀ {Γ A B C}
-  → Γ , A , B ⊢ C
-  → Γ ⊢ A
-  → Γ ⊢ B
-    ---------------
-  → Γ ⊢ C
+_[_] {Γ} {A} N V =  subst {Γ , A} {Γ} σ N
+_[_] {Γ} {A} N V =  subst {Γ , A} {Γ} σ N
+σ : ∀ {B} → Γ , A ∋ B → Γ ⊢ B
 
-_[_] : ∀ {Γ A B}
-  → Γ , A ⊢ B
-  → Γ ⊢ A
-  ------------
-  → Γ ⊢ B
+_[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ N
+σ : ∀ {C} → Γ , A , B ∋ C → Γ ⊢ C
 
-rename : ∀ {Γ Δ}
-  → (∀ {A} → Γ ∋ A → Δ ∋ A)
-    -----------------------
-  → (∀ {A} → Γ ⊢ A → Δ ⊢ A)
-
-S_ : ∀ {Γ A B}
-  → Γ ∋ B
-    ---------
-  → Γ , A ∋ B
-
-subst : ∀ {Γ Δ} → (∀ {C} → Γ ∋ C → Δ ⊢ C) → (∀ {C} → Γ ⊢ C → Δ ⊢ C)
-
-subst (747More.σ N V W) N ≡
+subst (747More.σ′ N V W) N ≡
 subst (747More.σ (subst (747More.σ N (rename S_ W)) N) V)
 (subst (747More.σ N (rename S_ W)) N)
 -}
 -- PLFA exercise (STRETCH):
+{-
 double-subst :
   ∀ {Γ} {A B C} {V : Γ ⊢ A} {W : Γ ⊢ B} {N : Γ , A , B ⊢ C} →
     N [ V ][ W ] ≡ (N [ rename S_ W ]) [ V ]
-double-subst {Γ} {A} {B} {C} {V} {W} {N} = {!   !} 
+double-subst {Γ} {A} {B} {C} {V} {W} {N} = {! !} 
+-}
+  
