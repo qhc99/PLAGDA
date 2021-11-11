@@ -194,6 +194,23 @@ data _⊢_ : Context → Type → Set where
     → Γ ⊢ A
     -------
     → Γ ⊢ A
+
+  `[] : ∀{Γ A} 
+      ------------
+    → Γ ⊢ `List A
+
+  _`∷_ : ∀{Γ A} 
+    → Γ ⊢ A
+    → Γ ⊢ `List A
+      ------------
+    → Γ ⊢ `List A
+
+  caseL : ∀{Γ A B} 
+    → Γ ⊢ `List A
+    → Γ ⊢ B
+    → Γ , A , `List A ⊢ B
+      --------------------
+    → Γ ⊢ B
   
 
 -- Abbreviating de Bruijn indices (unchanged)
@@ -248,11 +265,8 @@ rename ρ (case⊥ x) = case⊥ (rename ρ x) -- C-c C-a
 rename ρ (`inj₁ x) = `inj₁ (rename ρ x)
 rename ρ (`inj₂ x) = `inj₂ (rename ρ x)
 rename ρ (case⊎ x x₁ x₂) = case⊎ (rename ρ x) (rename (ext ρ) x₁) (rename (ext ρ) x₂)
-rename ρ `tt = `tt
-rename ρ `tt′ = `tt′
-rename ρ (case⊤ x x₁) = rename ρ x₁
 {-
-  For above case:
+  The above case cannot be solved by C-c C-a.
   Goal: Δ ⊢ A
   
   Type Inference:
@@ -260,12 +274,18 @@ rename ρ (case⊤ x x₁) = rename ρ x₁
   (rename (ext ρ) x₁) : Δ , A₁ ⊢ A
   (rename (ext ρ) x₂) : Δ , B ⊢ A
 
-  To get goal, we need to use "case⊎", which require input types "Δ ⊢ (A₁ `⊎ B)", "Δ , A₁ ⊢ A"
-  and "Δ , B ⊢ A".
-  By the cases above, we should use "rename" and "ext" to get required types.
+  To get goal, we need to use "case⊎", which require input types "Δ ⊢ (A₁ `⊎ B)", "Δ , A₁ ⊢ A" and "Δ , B ⊢ A".
+  By the finished cases above, we should use "rename" and "ext" to get required types.
   We start by rename, if the type inference is incorrect or failed, we just "ext ρ".
   Then just a few trys we find the answer.
 -}
+rename ρ `tt = `tt
+rename ρ `tt′ = `tt′
+rename ρ (case⊤ x x₁) = rename ρ x₁
+rename ρ `[] = `[]
+rename ρ (x `∷ x₁) = rename ρ x₁
+rename ρ (caseL x x₁ x₂) = rename ρ x₁
+
 
 
 -- Substitution (new cases in subst).
@@ -296,6 +316,9 @@ subst σ (case⊎ x x₁ x₂) = case⊎ (subst σ x) (subst (exts σ) x₁) (su
 subst σ `tt = `tt
 subst σ `tt′ = `tt′
 subst σ (case⊤ x x₁) = subst σ x₁
+subst σ `[] = `[]
+subst σ (x `∷ x₁) = subst σ x₁
+subst σ (caseL x x₁ x₂) = subst σ x₁
 -- Single substitution (unchanged)
 
 _[_] : ∀ {Γ A B}
@@ -364,19 +387,32 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
   -- Note the third implicit argument of "`inj₁"
   V-inj₁ : ∀ {Γ A B} {V : Γ ⊢ A}
     → Value V
-      ---------------
+      ---------------------------
     → Value (`inj₁ {Γ} {A} {B} V) 
 
   V-inj₂ : ∀ {Γ A B} {W : Γ ⊢ B}
     → Value W
-      ---------------
+      ---------------------------
     → Value (`inj₂ {Γ} {A} {B} W) 
 
   V-⊤ : ∀ {Γ} 
+      ---------------
     → Value (`tt {Γ})
 
   V-⊤′ : ∀ {Γ} 
+      ---------------
     → Value (`tt′ {Γ})
+
+  V-[] : ∀ {Γ A} 
+      ---------------------
+    → Value (`[] {Γ} {A})
+
+  -- need specify types of V and W to suppress warning
+  V-∷ : ∀ {Γ A} {V :  Γ ⊢ A} {W :  Γ ⊢ `List A} 
+    → Value V
+    → Value W
+      ----------------
+    →  Value (V `∷ W)
 
 -- Reduction (additions for all new features).
 
@@ -543,6 +579,29 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   β-case⊤ : ∀{Γ A M} 
       -----------------------------
     → (case⊤ {Γ} {A} `tt′ M ) —→  M
+
+  ξ-∷₁ : ∀{Γ A M M′}{N : Γ ⊢ `List A}
+    → M —→ M′
+      -------------------
+    → M `∷ N —→ M′ `∷ N
+
+  ξ-∷₂ : ∀{Γ A V} {N N′ : Γ ⊢ `List  A}
+    → N —→ N′
+      -------------------
+    → V `∷ N —→ V `∷ N′
+
+  ξ-caseL : ∀{Γ A B N} {L L′ : Γ ⊢ `List A} {M : Γ ⊢ B} 
+    → L —→ L′
+      ----------------------------
+    → (caseL L M N)  —→ (caseL L′ M N) 
+
+  β-[] : ∀{Γ A B M} {N : Γ , A , `List A ⊢ B} 
+      ---------------------------------------
+    → caseL `[] M N  —→ M
+
+  β-∷ : ∀{Γ A B M V W} {N : Γ , A , `List A ⊢ B} 
+      ------------------------------------
+    → caseL (V `∷ W) M N  —→ N [ V ][ W ] 
   
 -- Reflexive/transitive closure (unchanged).
 
@@ -581,6 +640,8 @@ V¬—→ V-⟨ VM , _ ⟩ (ξ-⟨,⟩₁ M—→M′)    =  V¬—→ VM M—�
 V¬—→ V-⟨ _ , VN ⟩ (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—→N′
 V¬—→ (V-inj₁ x) (ξ-inj₁ x₁) = V¬—→ x x₁
 V¬—→ (V-inj₂ x) (ξ-inj₂ x₁) = V¬—→ x x₁
+V¬—→ (V-∷ a a₁) (ξ-∷₁ b) = V¬—→ a b
+V¬—→ (V-∷ a a₁) (ξ-∷₂ b) = V¬—→ a₁ b
 
 
 -- Progress (new cases in theorem).
@@ -657,6 +718,16 @@ progress `tt′ = done V-⊤′
 progress (case⊤ x x₁) with progress x 
 ... | step x₂ = step (ξ-case⊤ x₂)
 ... | done V-⊤′ = step β-case⊤
+progress `[] = done V-[]
+progress (x `∷ x₁) with progress x | progress x₁ -- progress on x and x₁ instead of progress on x₁ only.
+... | step x₂ | step x₃ = step (ξ-∷₁ x₂)
+... | step x₂ | done x₃ = step (ξ-∷₁ x₂)
+... | done x₂ | step x₃ = step (ξ-∷₂ x₃)
+... | done x₂ | done x₃ = done (V-∷ x₂ x₃)
+progress (caseL x x₁ x₂) with progress x
+... | step x₃ = step (ξ-caseL x₃)
+... | done V-[] = step β-[]
+... | done (V-∷ x₃ x₄) = step β-∷
 
 
 {-
