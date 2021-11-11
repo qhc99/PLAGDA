@@ -730,22 +730,6 @@ progress (caseL x x₁ x₂) with progress x
 ... | done (V-∷ x₃ x₄) = step β-∷
 
 
-{-
-swap⊎ : ∀ {A B} →  ∅ ⊢ A `⊎ B ⇒ B `⊎ A
-swap⊎ = ƛ z ⇒ case⊎ z
-                [inj₁ x ⇒ `inj₂ x
-                |inj₂ y ⇒ `inj₁ y ]
-
-to⊎⊥ : ∀ {A : `⊥} →  ∅ ⊢ A ⇒ A `⊎ `⊥
-to⊎⊥ = ƛ x ⇒ `inj₁ x
-
-from⊎⊥ : ∀ {A : `⊥} →   ∅ ⊢ A `⊎ `⊥ ⇒ A
-from⊎⊥ = ƛ z ⇒ case⊎ z
-                 [inj₁ x ⇒ x
-                 |inj₂ y ⇒ case⊥ y
-                             [] ]
--}
-
 
 -- Evaluation (unchanged).
 
@@ -865,6 +849,19 @@ _ =
    ∎
 -}
 
+-- analogy to "swap×-case"
+swap⊎ : ∀ {A B} → ∅ ⊢ A `⊎ B ⇒ B `⊎ A
+swap⊎ = ƛ case⊎ (# 0) (`inj₂ (# 0)) (`inj₁ (# 0))
+
+_ : ∀ {B} →  (swap⊎ {`ℕ} {B} · (`inj₁ `zero )) —↠ (`inj₂ `zero)
+_ = begin 
+      swap⊎ · (`inj₁ `zero ) 
+    —→⟨ β-ƛ (V-inj₁ V-zero) ⟩
+      case⊎ (`inj₁ `zero ) (`inj₂ (# 0)) (`inj₁ (# 0))
+    —→⟨ β-inj₁ ⟩ 
+      (`inj₂ `zero) 
+    ∎
+
 -- 747/PLFA exercise: SumsEmpty (10 points)
 -- Add sums and the empty type to the above, using the syntax and rules
 -- given in PLFA More. If you want extra practice, add lists.
@@ -875,18 +872,6 @@ _ =
 -- If you add constructors to an inductive datatype, loading the file
 -- will helpfully tell you what cases are missing in code using it, and where.
 
-{-
-_[_] {Γ} {A} N V =  subst {Γ , A} {Γ} σ N
-_[_] {Γ} {A} N V =  subst {Γ , A} {Γ} σ N
-σ : ∀ {B} → Γ , A ∋ B → Γ ⊢ B
-
-_[_][_] {Γ} {A} {B} N V W =  subst {Γ , A , B} {Γ} σ N
-σ : ∀ {C} → Γ , A , B ∋ C → Γ ⊢ C
-
-subst (747More.σ′ N V W) N ≡
-subst (747More.σ (subst (747More.σ N (rename S_ W)) N) V)
-(subst (747More.σ N (rename S_ W)) N)
--}
 -- PLFA exercise (STRETCH):
 {-
 double-subst :
