@@ -37,7 +37,6 @@ data Type : Set where
   `⊥   : Type
   _`⊎_  : Type → Type → Type
   `⊤    : Type
-  `⊤′    : Type
   `List_ : Type → Type
 
 -- Contexts (unchanged).
@@ -163,15 +162,17 @@ data _⊢_ : Context → Type → Set where
   -}
   case⊥ : ∀ {Γ A}
     → Γ ⊢ `⊥
-    ---------
+      ---------
     → Γ ⊢ A
 
   `inj₁ : ∀ {Γ A B}
     → Γ ⊢ A
+      ----------
     → Γ ⊢ A `⊎ B
 
   `inj₂ : ∀ {Γ A B}
     → Γ ⊢ B
+      ----------
     → Γ ⊢ A `⊎ B
 
   case⊎ : ∀ {Γ A B C}
@@ -182,15 +183,11 @@ data _⊢_ : Context → Type → Set where
     → Γ ⊢ C
 
   `tt : ∀ {Γ}
-    ---------
+      -------
     → Γ ⊢ `⊤
 
-  `tt′ : ∀ {Γ}
-    ---------
-    → Γ ⊢ `⊤′ 
-
   case⊤ : ∀{Γ A}
-    → Γ ⊢ `⊤′ 
+    → Γ ⊢ `⊤ 
     → Γ ⊢ A
     -------
     → Γ ⊢ A
@@ -280,7 +277,6 @@ rename ρ (case⊎ x x₁ x₂) = case⊎ (rename ρ x) (rename (ext ρ) x₁) (
   Then just a few trys we find the answer.
 -}
 rename ρ `tt = `tt
-rename ρ `tt′ = `tt′
 rename ρ (case⊤ x x₁) = rename ρ x₁
 rename ρ `[] = `[]
 rename ρ (x `∷ x₁) = rename ρ x₁
@@ -314,7 +310,6 @@ subst σ (`inj₁ x) = `inj₁ (subst σ x)
 subst σ (`inj₂ x) = `inj₂ (subst σ x)
 subst σ (case⊎ x x₁ x₂) = case⊎ (subst σ x) (subst (exts σ) x₁) (subst (exts σ) x₂) -- similar idea as "rename".
 subst σ `tt = `tt
-subst σ `tt′ = `tt′
 subst σ (case⊤ x x₁) = subst σ x₁
 subst σ `[] = `[]
 subst σ (x `∷ x₁) = subst σ x₁
@@ -385,12 +380,12 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
     → Value `⟨ V , W ⟩
 
   -- Note the third implicit argument of "`inj₁"
-  V-inj₁ : ∀ {Γ A B} {V : Γ ⊢ A}
+  V-inj₁ : ∀ {Γ A B V}
     → Value V
       ---------------------------
     → Value (`inj₁ {Γ} {A} {B} V) 
 
-  V-inj₂ : ∀ {Γ A B} {W : Γ ⊢ B}
+  V-inj₂ : ∀ {Γ A B W} 
     → Value W
       ---------------------------
     → Value (`inj₂ {Γ} {A} {B} W) 
@@ -399,15 +394,10 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
       ---------------
     → Value (`tt {Γ})
 
-  V-⊤′ : ∀ {Γ} 
-      ---------------
-    → Value (`tt′ {Γ})
-
   V-[] : ∀ {Γ A} 
       ---------------------
     → Value (`[] {Γ} {A})
 
-  -- need specify types of V and W to suppress warning
   V-∷ : ∀ {Γ A} {V :  Γ ⊢ A} {W :  Γ ⊢ `List A} 
     → Value V
     → Value W
@@ -548,37 +538,40 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
       -------------------------------------
     → case⊥ {Γ} {A} L —→ case⊥ {Γ} {A} L′
 
-  ξ-inj₁ : ∀{Γ A B} {M M′ : Γ ⊢ A}
+  ξ-inj₁ : ∀{Γ A B M M′}
     → M —→ M′
       -------------------------------------------
     → `inj₁ {Γ} {A} {B} M —→ `inj₁ {Γ} {A} {B} M′ 
 
-  ξ-inj₂ : ∀{Γ A B} {N N′ : Γ ⊢ B}
+  ξ-inj₂ : ∀{Γ A B N N′}
     → N —→ N′
       -------------------------------------------
     → `inj₂ {Γ} {A} {B} N —→ `inj₂ {Γ} {A} {B} N′
 
-  ξ-case⊎ : ∀ {Γ A B C I1 I2} {L L′ : Γ ⊢ A `⊎ B}
+  ξ-case⊎ : ∀ {Γ A B C L L′ M N}
     → L —→ L′
         -------------------------------------------------------------
-    → case⊎ {Γ} {A} {B} {C} L I1 I2 —→ case⊎ {Γ} {A} {B} {C} L′ I1 I2
+    → case⊎ {Γ} {A} {B} {C} L M N —→ case⊎ {Γ} {A} {B} {C} L′ M N
 
+  -- "β-inj₁" and "β-inj₂" need input evidence "Value" as the examples of "Product".
   β-inj₁ : ∀{Γ A B C M N V}
+    → Value V
       ----------------------------------------------
     → case⊎ {Γ} {A} {B} {C} (`inj₁ V) M N —→ M [ V ]
 
   β-inj₂ : ∀{Γ A B C M N W}
+    → Value W
       ----------------------------------------------
     → case⊎ {Γ} {A} {B} {C} (`inj₂ W) M N —→ N [ W ]
 
-  ξ-case⊤ : ∀{Γ A M} {L L′ : Γ ⊢ `⊤′}
+  ξ-case⊤ : ∀{Γ A L L′ M}
     → L —→ L′
       ----------------------------------------
     → case⊤ {Γ} {A} L M —→ case⊤ {Γ} {A} L′ M
 
   β-case⊤ : ∀{Γ A M} 
       -----------------------------
-    → (case⊤ {Γ} {A} `tt′ M ) —→  M
+    → case⊤ {Γ} {A} `tt M  —→  M
 
   ξ-∷₁ : ∀{Γ A M M′}{N : Γ ⊢ `List A}
     → M —→ M′
@@ -587,6 +580,7 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
 
   ξ-∷₂ : ∀{Γ A V} {N N′ : Γ ⊢ `List  A}
     → N —→ N′
+    → Value V
       -------------------
     → V `∷ N —→ V `∷ N′
 
@@ -600,6 +594,8 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     → caseL `[] M N  —→ M
 
   β-∷ : ∀{Γ A B M V W} {N : Γ , A , `List A ⊢ B} 
+    → Value V
+    → Value W
       ------------------------------------
     → caseL (V `∷ W) M N  —→ N [ V ][ W ] 
   
@@ -641,7 +637,7 @@ V¬—→ V-⟨ _ , VN ⟩ (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—�
 V¬—→ (V-inj₁ x) (ξ-inj₁ x₁) = V¬—→ x x₁
 V¬—→ (V-inj₂ x) (ξ-inj₂ x₁) = V¬—→ x x₁
 V¬—→ (V-∷ a a₁) (ξ-∷₁ b) = V¬—→ a b
-V¬—→ (V-∷ a a₁) (ξ-∷₂ b) = V¬—→ a₁ b
+V¬—→ (V-∷ a a₁) (ξ-∷₂ b x) = V¬—→ a₁ b
 
 
 -- Progress (new cases in theorem).
@@ -711,23 +707,22 @@ progress (`inj₂ M) with progress M
 ... | done x = done (V-inj₂ x)
 progress (case⊎ M M₁ M₂) with progress M
 ... | step x = step (ξ-case⊎ x)
-... | done (V-inj₁ x) = step β-inj₁ -- case split then solved by C-c C-a
-... | done (V-inj₂ x) = step β-inj₂
+... | done (V-inj₁ x) = step (β-inj₁ x)
+... | done (V-inj₂ x) = step (β-inj₂ x)
 progress `tt = done V-⊤
-progress `tt′ = done V-⊤′
 progress (case⊤ x x₁) with progress x 
 ... | step x₂ = step (ξ-case⊤ x₂)
-... | done V-⊤′ = step β-case⊤
+... | done V-⊤ = step β-case⊤
 progress `[] = done V-[]
 progress (x `∷ x₁) with progress x | progress x₁ -- progress on x and x₁ instead of progress on x₁ only.
 ... | step x₂ | step x₃ = step (ξ-∷₁ x₂)
 ... | step x₂ | done x₃ = step (ξ-∷₁ x₂)
-... | done x₂ | step x₃ = step (ξ-∷₂ x₃)
+... | done x₂ | step x₃ = step (ξ-∷₂ x₃ x₂)
 ... | done x₂ | done x₃ = done (V-∷ x₂ x₃)
 progress (caseL x x₁ x₂) with progress x
 ... | step x₃ = step (ξ-caseL x₃)
 ... | done V-[] = step β-[]
-... | done (V-∷ x₃ x₄) = step β-∷
+... | done (V-∷ x₃ x₄) = step (β-∷ x₃ x₄)
 
 
 
@@ -858,9 +853,72 @@ _ = begin
       swap⊎ · (`inj₁ `zero ) 
     —→⟨ β-ƛ (V-inj₁ V-zero) ⟩
       case⊎ (`inj₁ `zero ) (`inj₂ (# 0)) (`inj₁ (# 0))
-    —→⟨ β-inj₁ ⟩ 
+    —→⟨ β-inj₁ V-zero ⟩ 
       (`inj₂ `zero) 
     ∎
+
+to×⊤ : ∀ {A} → ∅ ⊢ A ⇒ A `× `⊤
+to×⊤ = ƛ `⟨ (# 0) , `tt ⟩
+
+_ :  to×⊤ · `zero —↠ `⟨ `zero , `tt ⟩
+_ = begin 
+      to×⊤ · `zero 
+    —→⟨ β-ƛ V-zero ⟩ 
+      `⟨ `zero , `tt ⟩ 
+    ∎
+
+from×⊤ : ∀ {A} → ∅ ⊢ A `× `⊤ ⇒ A
+from×⊤ = ƛ `proj₁ (# 0)
+
+_ : from×⊤ · `⟨ `zero , `tt ⟩  —↠ `zero
+_ = begin 
+      from×⊤ · `⟨ `zero , `tt ⟩ 
+     —→⟨ β-ƛ V-⟨ V-zero , V-⊤ ⟩ ⟩  
+      `proj₁ `⟨ `zero , `tt ⟩ 
+    —→⟨ β-proj₁ V-zero V-⊤ ⟩  
+      `zero 
+    ∎
+
+from×⊤-case : ∀{A} →  ∅ ⊢ A `× `⊤ ⇒ A
+from×⊤-case = ƛ (case× (# 0) (case⊤ (# 0) (# 1)))
+
+_ : from×⊤-case · `⟨ `zero , `tt ⟩ —↠ `zero 
+_ =  begin 
+        from×⊤-case · `⟨ `zero , `tt ⟩ 
+      —→⟨ β-ƛ V-⟨ V-zero , V-⊤ ⟩ ⟩ 
+        case× `⟨ `zero , `tt ⟩ (# 1) 
+      —→⟨ β-case× V-zero V-⊤ ⟩ 
+        `zero 
+      ∎ 
+
+to⊎⊥ : ∀ {A} →  ∅ ⊢ A ⇒ A `⊎ `⊥
+to⊎⊥ = ƛ `inj₁ (# 0)
+
+from⊎⊥ : ∀ {A} →  ∅ ⊢ A `⊎ `⊥ ⇒ A
+from⊎⊥ = ƛ case⊎ (# 0) (# 0) (case⊥ (# 0))
+
+mapL : ∀{A B} →  ∅ ⊢ (A ⇒ B) ⇒ `List A ⇒ `List B
+mapL = μ ƛ ƛ caseL (# 0) `[] (((# 3) · (# 1)) `∷ ((# 4) · (# 3) · (# 0)))
+
+_ : mapL · cube · (con 2 `∷ `[]) —↠ (con 8 `∷ `[])
+_ = {! eval (gas 100) (mapL · cube · (con 2 `∷ `[]))  !}
+
+{-
+steps
+((μ
+  (ƛ
+   (ƛ
+    caseL (` Z) `[]
+    ((` (S (S (S Z))) · ` (S Z)) `∷
+     (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
+ · (ƛ ` Z `* ` Z `* ` Z)
+ · (con 2 `∷ `[])
+ —→⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
+ (ƛ (ƛ `[])) · (ƛ ` Z `* ` Z `* ` Z) · (con 2 `∷ `[]) —→⟨
+ ξ-·₁ (β-ƛ V-ƛ) ⟩
+ (ƛ `[]) · (con 2 `∷ `[]) —→⟨ β-ƛ (V-∷ V-con V-[]) ⟩ `[] ∎)
+(done V-[])
+-}
 
 -- 747/PLFA exercise: SumsEmpty (10 points)
 -- Add sums and the empty type to the above, using the syntax and rules
@@ -879,4 +937,4 @@ double-subst :
     N [ V ][ W ] ≡ (N [ rename S_ W ]) [ V ]
 double-subst {Γ} {A} {B} {C} {V} {W} {N} = {! !} 
 -}
-  
+    
