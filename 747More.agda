@@ -533,7 +533,7 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     → case× `⟨ V , W ⟩ M —→ M [ V ][ W ]
   
   -- We need to get implicit argument "Γ" "A" for "case⊥" to suppress warning of "—→" in the last line.
-  ξ-case⊥ : ∀ {Γ A} {L L′ : Γ ⊢ `⊥}
+  ξ-case⊥ : ∀ {Γ A L L′}
     → L —→ L′
       -------------------------------------
     → case⊥ {Γ} {A} L —→ case⊥ {Γ} {A} L′
@@ -579,25 +579,25 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     → M `∷ N —→ M′ `∷ N
 
   ξ-∷₂ : ∀{Γ A V} {N N′ : Γ ⊢ `List  A}
-    → N —→ N′
     → Value V
+    → N —→ N′
       -------------------
     → V `∷ N —→ V `∷ N′
 
-  ξ-caseL : ∀{Γ A B N} {L L′ : Γ ⊢ `List A} {M : Γ ⊢ B} 
+  ξ-caseL : ∀{Γ A B N L L′ M}
     → L —→ L′
       ----------------------------
-    → (caseL L M N)  —→ (caseL L′ M N) 
+    → (caseL {Γ} {A} {B} L M N)  —→ (caseL {Γ} {A} {B} L′ M N) 
 
-  β-[] : ∀{Γ A B M} {N : Γ , A , `List A ⊢ B} 
+  β-[] : ∀{Γ A B M N}
       ---------------------------------------
-    → caseL `[] M N  —→ M
+    → (caseL {Γ} {A} {B} `[] M N)  —→ M
 
-  β-∷ : ∀{Γ A B M V W} {N : Γ , A , `List A ⊢ B} 
+  β-∷ : ∀{Γ A B M V W N}
     → Value V
     → Value W
       ------------------------------------
-    → caseL (V `∷ W) M N  —→ N [ V ][ W ] 
+    → (caseL {Γ} {A} {B} (V `∷ W) M N)  —→ N [ V ][ W ] 
   
 -- Reflexive/transitive closure (unchanged).
 
@@ -637,7 +637,7 @@ V¬—→ V-⟨ _ , VN ⟩ (ξ-⟨,⟩₂ _ N—→N′)  =  V¬—→ VN N—�
 V¬—→ (V-inj₁ x) (ξ-inj₁ x₁) = V¬—→ x x₁
 V¬—→ (V-inj₂ x) (ξ-inj₂ x₁) = V¬—→ x x₁
 V¬—→ (V-∷ a a₁) (ξ-∷₁ b) = V¬—→ a b
-V¬—→ (V-∷ a a₁) (ξ-∷₂ b x) = V¬—→ a₁ b
+V¬—→ (V-∷ a a₁) (ξ-∷₂ b x) = V¬—→ a₁ x
 
 
 -- Progress (new cases in theorem).
@@ -714,12 +714,12 @@ progress (case⊤ x x₁) with progress x
 ... | step x₂ = step (ξ-case⊤ x₂)
 ... | done V-⊤ = step β-case⊤
 progress `[] = done V-[]
-progress (x `∷ x₁) with progress x | progress x₁ -- progress on x and x₁ instead of progress on x₁ only.
-... | step x₂ | step x₃ = step (ξ-∷₁ x₂)
-... | step x₂ | done x₃ = step (ξ-∷₁ x₂)
-... | done x₂ | step x₃ = step (ξ-∷₂ x₃ x₂)
-... | done x₂ | done x₃ = done (V-∷ x₂ x₃)
-progress (caseL x x₁ x₂) with progress x
+progress (x `∷ x₁) with progress x -- progress on the first then the second as the example case of product
+... | step x₂ = step (ξ-∷₁ x₂)
+... | done x₂ with progress x₁
+... | step x₃ = step (ξ-∷₂ x₂ x₃)
+... | done x₃ = done (V-∷ x₂ x₃)
+progress (caseL x x₁ x₂) with progress x 
 ... | step x₃ = step (ξ-caseL x₃)
 ... | done V-[] = step β-[]
 ... | done (V-∷ x₃ x₄) = step (β-∷ x₃ x₄)
@@ -899,24 +899,53 @@ from⊎⊥ = ƛ case⊎ (# 0) (# 0) (case⊥ (# 0))
 
 mapL : ∀{A B} →  ∅ ⊢ (A ⇒ B) ⇒ `List A ⇒ `List B
 mapL = μ ƛ ƛ caseL (# 0) `[] (((# 3) · (# 1)) `∷ ((# 4) · (# 3) · (# 0)))
+{-
+mapL : ∅ ⊢ (A ⇒ B) ⇒ `List A ⇒ `List B
+mapL = μ mL ⇒ ƛ f ⇒ ƛ xs ⇒
+         caseL xs
+           [[]⇒ `[]
+           | x ∷ xs ⇒ f · x `∷ mL · f · xs ]
 
-_ : mapL · cube · (con 2 `∷ `[]) —↠ (con 8 `∷ `[])
-_ = {! eval (gas 100) (mapL · cube · (con 2 `∷ `[]))  !}
+reduceL : ∅ ⊢ (A ⇒ A ⇒ A) ⇒ A ⇒ `List A ⇒ A
+reduceL = μ rL ⇒ ƛ f ⇒  ƛ v  ⇒ ƛ xs ⇒
+         caseL xs
+           [[]⇒ v
+           | x ∷ xs ⇒  rL · f · (f · x · v)· xs ]
+-}
+reduceL : ∀{A} →  ∅ ⊢ (A ⇒ A ⇒ A) ⇒ A ⇒ `List A ⇒ A
+reduceL = μ ƛ ƛ ƛ caseL (# 0) (# 1) ((# 5) · (# 4) · ((# 4) · (# 1) · (# 3))· (# 0))
+
+_ : mapL · cube · (con 2 `∷ (con 3 `∷ `[])) —↠ con 8 `∷ (con 27 `∷ `[])
+_ = {! eval (gas 100) (mapL · cube · (con 2 `∷ (con 3 `∷ `[])))  !}
+
+mul : ∅ ⊢ Nat ⇒ Nat ⇒ Nat
+mul = ƛ ƛ (# 0 `* # 1)
+
+_ : (reduceL · mul · (con 1) · (con 2 `∷ (con 3 `∷ (con 4 `∷ `[])))) —↠ con 24
+_  = {! eval (gas 100) (reduceL · mul · (con 1) · (con 2 `∷ (con 3 `∷ (con 4 `∷ `[]))))  !}
 
 {-
 steps
-((μ
-  (ƛ
-   (ƛ
-    caseL (` Z) `[]
-    ((` (S (S (S Z))) · ` (S Z)) `∷
-     (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
- · (ƛ ` Z `* ` Z `* ` Z)
- · (con 2 `∷ `[])
+(
+  (μ
+    (ƛ
+      (ƛ
+        caseL (` Z) 
+          `[]
+          ((` (S (S (S Z))) · ` (S Z)) `∷ (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z))
+      )
+    )
+  )
+  · (ƛ ` Z `* ` Z `* ` Z)
+  · (con 2 `∷ (con 3 `∷ `[]))
  —→⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
- (ƛ (ƛ `[])) · (ƛ ` Z `* ` Z `* ` Z) · (con 2 `∷ `[]) —→⟨
- ξ-·₁ (β-ƛ V-ƛ) ⟩
- (ƛ `[]) · (con 2 `∷ `[]) —→⟨ β-ƛ (V-∷ V-con V-[]) ⟩ `[] ∎)
+  (ƛ (ƛ `[])) · (ƛ ` Z `* ` Z `* ` Z) · (con 2 `∷ (con 3 `∷ `[])) 
+ —→⟨ ξ-·₁ (β-ƛ V-ƛ) ⟩
+  (ƛ `[]) · (con 2 `∷ (con 3 `∷ `[])) 
+ —→⟨ β-ƛ (V-∷ V-con (V-∷ V-con V-[])) ⟩ 
+  `[] 
+∎
+)
 (done V-[])
 -}
 
@@ -937,4 +966,4 @@ double-subst :
     N [ V ][ W ] ≡ (N [ rename S_ W ]) [ V ]
 double-subst {Γ} {A} {B} {C} {V} {W} {N} = {! !} 
 -}
-    
+      
