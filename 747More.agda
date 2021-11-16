@@ -26,7 +26,99 @@ infix  8 `suc_
 infix  9 `_
 infix  9 S_
 infix  9 #_
+{-
+write rules of Boolean by ourselves.
 
+Syntax:
+  A, B, C ::= ...                     Types
+    Bool                              boolean
+
+  L, M, N ::= ...                     Terms
+    L && M                            and
+    L || M                            or
+    ! L                               not 
+
+  V, W ::= ...                        Values
+    `true                             true
+    `false                            false
+    V && W                            and
+    V || W                            or
+    ! V                               not 
+
+
+Typing:  
+  --------------- `true
+  Γ ⊢ `true : Bool    
+
+  --------------- `false
+  Γ ⊢ `false : Bool
+
+  Γ ⊢ V : Bool
+  Γ ⊢ W : Bool  
+  --------------- _`&&_
+  Γ ⊢ V `&& W : Bool
+  
+  Γ ⊢ V : Bool
+  Γ ⊢ W : Bool  
+  ---------------- _`||_
+  Γ ⊢ V `|| W : Bool
+
+  Γ ⊢ V  : Bool
+  ---------------- `!_
+  Γ ⊢ `! V : Bool
+
+Reduction
+
+  L —→ L′
+  ----------------- ξ-and₁
+  L `&& M —→ L′ `&&  M
+
+  M —→ M′
+  ----------------- ξ-and₂
+  V `&& M —→ V `&& M′
+
+  ----------------- β-and-true₁
+  `true `&& `true —→ `true
+
+  ----------------- β-and-false₁
+  `true `&& `false —→ `false
+
+  ----------------- β-and-false₂
+  `false `&& `true —→ `false
+
+  ----------------- β-and-false₃
+  `false `&& `false —→ `false
+
+  L —→ L′
+  ----------------- ξ-or₁
+  L `|| M —→ L′ `||  M
+
+  M —→ M′
+  ----------------- ξ-or₂
+  V `|| M —→ V `|| M′
+
+  ----------------- β-or-true₁
+  `true `|| `true —→ `true
+
+  ----------------- β-or-true₂
+  `true `|| `false —→ `true
+
+  ----------------- β-or-true₃
+  `false `|| `true —→ `true
+
+  ----------------- β-or-false₁
+  `false `|| `false —→ `false
+
+  L —→ L′
+  ----------------- ξ-not
+  `! L  —→ `! L
+
+  ----------------- β-not-true
+  `! false —→ `true
+
+  ----------------- β-not-false
+  `! `true —→ `false
+-}
 -- Types (third and fourth are new).
 
 data Type : Set where
@@ -38,6 +130,7 @@ data Type : Set where
   _`⊎_  : Type → Type → Type
   `⊤    : Type
   `List_ : Type → Type
+  `Bool : Type
 
 -- Contexts (unchanged).
 
@@ -208,6 +301,31 @@ data _⊢_ : Context → Type → Set where
     → Γ , A , `List A ⊢ B
       --------------------
     → Γ ⊢ B
+
+  `true : ∀{Γ}
+      ---------
+    → Γ ⊢ `Bool
+
+  `false : ∀{Γ}
+      ---------
+    → Γ ⊢ `Bool
+
+  _`&&_ : ∀{Γ}
+    → Γ ⊢ `Bool
+    → Γ ⊢ `Bool
+      ----------
+    → Γ ⊢ `Bool
+
+  _`||_ : ∀{Γ}
+    → Γ ⊢ `Bool
+    → Γ ⊢ `Bool
+      ----------
+    → Γ ⊢ `Bool
+
+  `!_ : ∀{Γ}
+    → Γ ⊢ `Bool
+      ----------
+    → Γ ⊢ `Bool
   
 
 -- Abbreviating de Bruijn indices (unchanged)
@@ -281,6 +399,11 @@ rename ρ (case⊤ x x₁) = rename ρ x₁
 rename ρ `[] = `[]
 rename ρ (x `∷ x₁) = rename ρ x₁
 rename ρ (caseL x x₁ x₂) = rename ρ x₁
+rename ρ `true = `true
+rename ρ `false = `true
+rename ρ (x `&& x₁) = rename ρ x₁
+rename ρ (x `|| x₁) = rename ρ x₁
+rename ρ (`! x) = rename ρ x
 
 
 
@@ -314,6 +437,11 @@ subst σ (case⊤ x x₁) = subst σ x₁
 subst σ `[] = `[]
 subst σ (x `∷ x₁) = subst σ x₁
 subst σ (caseL x x₁ x₂) = subst σ x₁
+subst σ `true = `true
+subst σ `false = `true
+subst σ (x `&& x₁) = subst σ x₁
+subst σ (x `|| x₁) = subst σ x₁
+subst σ (`! x) = subst σ x
 -- Single substitution (unchanged)
 
 _[_] : ∀ {Γ A B}
@@ -403,6 +531,33 @@ data Value : ∀ {Γ A} → Γ ⊢ A → Set where
     → Value W
       ----------------
     →  Value (V `∷ W)
+
+  V-true : ∀ {Γ} 
+      ---------------------
+    → Value (`true {Γ})
+
+  V-false : ∀ {Γ} 
+      ---------------------
+    → Value (`false {Γ})
+
+  {-
+  V-and : ∀ {Γ}{V W :  Γ ⊢ `Bool} 
+    → Value V
+    → Value W
+      ----------------
+    →  Value (V `&& W)
+
+  V-or : ∀ {Γ}{V W :  Γ ⊢ `Bool} 
+    → Value V
+    → Value W
+      ----------------
+    →  Value (V `&& W)
+
+  V-not : ∀ {Γ}{V :  Γ ⊢ `Bool} 
+    → Value V
+      ----------------
+    →  Value (`! V)
+  -}
 
 -- Reduction (additions for all new features).
 
@@ -598,6 +753,71 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     → Value W
       ------------------------------------
     → (caseL {Γ} {A} {B} (V `∷ W) M N)  —→ N [ V ][ W ] 
+
+  ξ-and₁ : ∀{Γ} {L L′ M : Γ ⊢ `Bool}
+     → L —→ L′
+      ---------------------
+     → L `&& M —→ L′ `&&  M
+
+  ξ-and₂ : ∀{Γ} {V M M′ : Γ ⊢ `Bool}
+    → Value V
+     → M —→ M′
+      ---------------------
+     → V `&& M —→ V `&&  M′
+
+  β-and-true₁ : ∀ {Γ}
+      ------------------------
+    → _`&&_ {Γ} `true `true —→ `true
+
+  β-and-false₁ : ∀ {Γ}
+      --------------------------
+    → _`&&_ {Γ} `true `false —→ `false
+
+  β-and-false₂ : ∀ {Γ}
+      --------------------------
+    → _`&&_ {Γ} `false `true —→ `false
+
+  β-and-false₃ : ∀ {Γ}
+      ---------------------------
+    → _`&&_ {Γ} `false `false —→ `false
+
+  ξ-or₁ : ∀{Γ} {L L′ M : Γ ⊢ `Bool}
+     → L —→ L′
+      ---------------------
+     → L `|| M —→ L′ `||  M
+
+  ξ-or₂ : ∀{Γ} {V M M′ : Γ ⊢ `Bool}
+    → Value V
+     → M —→ M′
+      ---------------------
+     → V `|| M —→ V `||  M′
+
+  β-or-true₁ : ∀ {Γ}
+      ------------------------
+    → _`||_ {Γ} `true `true —→ `true
+
+  β-or-true₂ : ∀ {Γ}
+      --------------------------
+    → _`||_ {Γ} `true `false —→ `true
+
+  β-or-true₃ : ∀ {Γ}
+      --------------------------
+    → _`||_ {Γ} `false `true —→ `true
+
+  β-or-false₁ : ∀ {Γ}
+      ---------------------------
+    → _`||_ {Γ} `false `false —→ `false
+
+  ξ-not : ∀{Γ} {L L′ : Γ ⊢ `Bool}
+     → L —→ L′
+      ---------------------
+     → `! L —→ `! L′
+
+  β-not-true : ∀ {Γ}
+    → `!_ {Γ} `false —→ `true
+
+  β-not-false : ∀ {Γ}
+    → `!_ {Γ} `true —→ `false
   
 -- Reflexive/transitive closure (unchanged).
 
@@ -638,6 +858,7 @@ V¬—→ (V-inj₁ x) (ξ-inj₁ x₁) = V¬—→ x x₁
 V¬—→ (V-inj₂ x) (ξ-inj₂ x₁) = V¬—→ x x₁
 V¬—→ (V-∷ a a₁) (ξ-∷₁ b) = V¬—→ a b
 V¬—→ (V-∷ a a₁) (ξ-∷₂ b x) = V¬—→ a₁ x
+
 
 
 -- Progress (new cases in theorem).
@@ -723,6 +944,31 @@ progress (caseL x x₁ x₂) with progress x
 ... | step x₃ = step (ξ-caseL x₃)
 ... | done V-[] = step β-[]
 ... | done (V-∷ x₃ x₄) = step (β-∷ x₃ x₄)
+progress `true = done V-true
+progress `false = done V-false
+progress (x `&& x₁) with progress x 
+... | step x₂ = step (ξ-and₁ x₂)
+... | done x₂ with progress x₁
+... | step x₃ = step (ξ-and₂ x₂ x₃)
+... | done x₃ with x₂ | x₃
+... | V-true | V-true = step β-and-true₁
+... | V-true | V-false = step β-and-false₁
+... | V-false | V-true = step β-and-false₂
+... | V-false | V-false = step β-and-false₃
+progress (x `|| x₁) with progress x
+... | step x₂ = step (ξ-or₁ x₂)
+... | done x₂ with progress x₁ 
+... | step x₃ = step (ξ-or₂ x₂ x₃)
+... | done x₃ with x₂ | x₃
+... | V-true | V-true = step β-or-true₁
+... | V-true | V-false = step β-or-true₂
+... | V-false | V-true = step β-or-true₃
+... | V-false | V-false = step β-or-false₁
+progress (`! x) with progress x
+... | step x₁ = step (ξ-not x₁)
+... | done x₁ with x₁
+... | V-true = step β-not-false
+... | V-false = step β-not-true
 
 
 
@@ -911,12 +1157,22 @@ reduceL = μ rL ⇒ ƛ f ⇒  ƛ v  ⇒ ƛ xs ⇒
          caseL xs
            [[]⇒ v
            | x ∷ xs ⇒  rL · f · (f · x · v)· xs ]
+
+appendL : ∀{A} →  ∅ ⊢ `List A ⇒ `List A ⇒ `List A
+appendL = μ aL ⇒ ƛ l1 ⇒  ƛ l2  ⇒ 
+         caseL l1
+           [[]⇒ l2
+           | x ∷ l1 ⇒  rL · l1 · (x  ∷ l2) ]
 -}
 reduceL : ∀{A} →  ∅ ⊢ (A ⇒ A ⇒ A) ⇒ A ⇒ `List A ⇒ A
 reduceL = μ ƛ ƛ ƛ caseL (# 0) (# 1) ((# 5) · (# 4) · ((# 4) · (# 1) · (# 3))· (# 0))
 
+appendL : ∀{A} →  ∅ ⊢ `List A ⇒ `List A ⇒ `List A
+appendL = μ ƛ ƛ caseL (# 1) (# 1) ((# 4) · (# 0) · ((# 1) `∷ (# 2)) )
+
+
 _ : mapL · cube · (con 2 `∷ (con 3 `∷ `[])) —↠ con 8 `∷ (con 27 `∷ `[])
-_ = {! eval (gas 100) (mapL · cube · (con 2 `∷ (con 3 `∷ `[])))  !}
+_ = {! eval (gas 100) (appendL · (con 2 `∷ (con 3 `∷ `[])) · (con 2 `∷ (con 3 `∷ `[])))  !}
 
 mul : ∅ ⊢ Nat ⇒ Nat ⇒ Nat
 mul = ƛ ƛ (# 0 `* # 1)
