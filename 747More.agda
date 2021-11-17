@@ -41,9 +41,6 @@ Syntax:
   V, W ::= ...                        Values
     `true                             true
     `false                            false
-    V && W                            and
-    V || W                            or
-    ! V                               not 
 
 
 Typing:  
