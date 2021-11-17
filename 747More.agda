@@ -66,8 +66,8 @@ Typing:
   Γ ⊢ `! V : Bool
 
   Γ ⊢ L : Bool
-  Γ , `true : Bool ⊢ M ⦂ A
-  Γ , `false : Bool ⊢ N ⦂ A
+  Γ ⊢ M ⦂ A
+  Γ ⊢ N ⦂ A
   ---------------- caseB
   Γ ⊢ caseB L [`true ⇒ M |`false  ⇒ N ] ⦂ A
 
@@ -829,16 +829,6 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   β-not-false : ∀ {Γ}
       -----------------------
     → `!_ {Γ} `true —→ `false
-
-  {-
-    caseB : ∀ {Γ A}
-    → Γ ⊢ `Bool
-    → Γ , `Bool ⊢ A
-    → Γ , `Bool ⊢ A
-      ---------
-    → Γ ⊢ A
-  -}
-
   
   ξ-caseB : ∀{Γ A L L′ M N}
     → L —→ L′
@@ -1157,7 +1147,6 @@ _ : compute (gas 100)
     (con 0 `∷ (con 0 `∷ (con 2022 `∷ `[])))
 _ = refl
 
-
 _ : compute (gas 100) 
   (mapL · cube · (con 2 `∷ (con 3 `∷ (con 5 `∷ `[])))) ≡ (con 8 `∷ (con 27 `∷ (con 125 `∷ `[]))) 
 _ = refl
@@ -1192,7 +1181,6 @@ And we can see the Result below matches the expected bool table.
 
 bool-expression1 : ∅ ⊢ `Bool ⇒ `Bool ⇒ `Bool ⇒ `Bool
 bool-expression1 = ƛ ƛ ƛ ((`! (# 2)) `&& (# 1)) `|| (# 0)
- 
 
 _ : compute (gas 100) 
   (bool-expression1 · `false · `false · `false) ≡ `false
