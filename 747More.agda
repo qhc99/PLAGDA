@@ -37,6 +37,7 @@ Syntax:
     L && M                            and
     L || M                            or
     ! L                               not 
+    caseB L M N                       caseB
 
   V, W ::= ...                        Values
     `true                             true
@@ -63,6 +64,12 @@ Typing:
   Γ ⊢ V  : Bool
   ---------------- `!_
   Γ ⊢ `! V : Bool
+
+  Γ ⊢ L : Bool
+  Γ , `true : Bool ⊢ M ⦂ A
+  Γ , `false : Bool ⊢ N ⦂ A
+  ---------------- caseB
+  Γ ⊢ caseB L [`true ⇒ M |`false  ⇒ N ] ⦂ A
 
 Reduction
 
@@ -115,6 +122,16 @@ Reduction
 
   ----------------- β-not-false
   `! `true —→ `false
+
+  L —→ L′
+  ----------------------------------------ξ-caseB
+  caseB L M N —→ caseB L′ M N
+
+  -----------------------------β-caseB-true
+  → caseB `true M N  —→  M
+
+  -----------------------------β-caseB-false
+  → caseB `false M N  —→ N
 -}
 -- Types (third and fourth are new).
 
@@ -246,8 +263,8 @@ data _⊢_ : Context → Type → Set where
     → Γ ⊢ C
   
   {-
-  We see how the typing rule of "Alternative formulation of products" is transformed 
-  into "case×" above and we get "case⊥" by analogy.
+  We see how the typing rule of "Alternative formulation of products" is transformed into 
+  "case×" above and we get "case⊥" by analogy.
   It means we can get any type if we have type "Empty".
   -}
   case⊥ : ∀ {Γ A}
@@ -323,6 +340,13 @@ data _⊢_ : Context → Type → Set where
     → Γ ⊢ `Bool
       ----------
     → Γ ⊢ `Bool
+
+  caseB : ∀ {Γ A}
+    → Γ ⊢ `Bool
+    → Γ ⊢ A
+    → Γ ⊢ A
+      ---------
+    → Γ ⊢ A
   
 
 -- Abbreviating de Bruijn indices (unchanged)
@@ -406,6 +430,7 @@ rename ρ `false = `false
 rename ρ (x `&& x₁) = (rename ρ x) `&&  (rename ρ x₁) 
 rename ρ (x `|| x₁) = (rename ρ x) `|| (rename ρ x₁) 
 rename ρ (`! x) = `! (rename ρ x) 
+rename ρ (caseB x x₁ x₂) = caseB (rename ρ x) (rename ρ x₁) (rename ρ x₂)
 
 
 
@@ -443,7 +468,8 @@ subst σ `true = `true
 subst σ `false = `false
 subst σ (x `&& x₁) = (subst σ x) `&& (subst σ x₁) 
 subst σ (x `|| x₁) = (subst σ x) `|| (subst σ x₁) 
-subst σ (`! x) = `! (subst σ x) 
+subst σ (`! x) = `! (subst σ x)
+subst σ (caseB x x₁ x₂) = caseB (subst σ x) (subst σ x₁) (subst σ x₂)
 -- Single substitution (unchanged)
 
 _[_] : ∀ {Γ A B}
@@ -803,6 +829,30 @@ data _—→_ : ∀ {Γ A} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
   β-not-false : ∀ {Γ}
       -----------------------
     → `!_ {Γ} `true —→ `false
+
+  {-
+    caseB : ∀ {Γ A}
+    → Γ ⊢ `Bool
+    → Γ , `Bool ⊢ A
+    → Γ , `Bool ⊢ A
+      ---------
+    → Γ ⊢ A
+  -}
+
+  
+  ξ-caseB : ∀{Γ A L L′ M N}
+    → L —→ L′
+      ----------------------------------------
+    → caseB {Γ} {A} L M N —→ caseB {Γ} {A} L′ M N
+
+  β-caseB-true : ∀{Γ A M N} 
+      -----------------------------
+    → caseB {Γ} {A} `true M N —→ M
+
+  β-caseB-false : ∀{Γ A M N} 
+      -----------------------------
+    → caseB {Γ} {A} `false M N —→  N
+  
   
 -- Reflexive/transitive closure (unchanged).
 
@@ -953,6 +1003,10 @@ progress (`! x) with progress x
 ... | done x₁ with x₁
 ... | V-true = step β-not-false
 ... | V-false = step β-not-true
+progress (caseB x x₁ x₂) with progress x
+... | step x₃ = step (ξ-caseB x₃)
+... | done V-true = step β-caseB-true
+... | done V-false = step β-caseB-false
 
 
 
@@ -995,8 +1049,18 @@ eval (gas (suc m)) L with progress L
 ... | step {M} L—→M with eval (gas m) M
 ...    | steps M—↠N fin                  =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
 
+compute :  ∀{A} → Gas → (L : ∅ ⊢ A) → ∅ ⊢ A
+compute (gas a) L = extract-res (gas a) (eval (gas a) L)
+  where
+  extract-res : ∀{A} {L : ∅ ⊢ A} → Gas → Steps L → ∅ ⊢ A
+  extract-res (gas zero) (steps {p} {q} x x₁) = q
+  extract-res (gas (suc amount)) (steps {p} {q} (_ ∎) x₁) = p
+  extract-res (gas (suc amount)) (steps (_ —→⟨ x ⟩ x₂) x₁)  = extract-res (gas amount) (steps x₂ x₁)
+
+
 cube : ∅ ⊢ Nat ⇒ Nat
 cube = ƛ (# 0 `* # 0 `* # 0)
+
 
 -- analogy to "swap×-case"
 swap⊎ : ∀ {A B} → ∅ ⊢ A `⊎ B ⇒ B `⊎ A
@@ -1014,43 +1078,27 @@ _ = begin
 to×⊤ : ∀ {A} → ∅ ⊢ A ⇒ A `× `⊤
 to×⊤ = ƛ `⟨ (# 0) , `tt ⟩
 
-_ :  to×⊤ · `zero —↠ `⟨ `zero , `tt ⟩
-_ = begin 
-      to×⊤ · `zero 
-    —→⟨ β-ƛ V-zero ⟩ 
-      `⟨ `zero , `tt ⟩ 
-    ∎
+_ :  compute (gas 100) (to×⊤ · `zero) ≡  `⟨ `zero , `tt ⟩
+_ = refl
 
 from×⊤ : ∀ {A} → ∅ ⊢ A `× `⊤ ⇒ A
 from×⊤ = ƛ `proj₁ (# 0)
 
-_ : from×⊤ · `⟨ `zero , `tt ⟩  —↠ `zero
-_ = begin 
-      from×⊤ · `⟨ `zero , `tt ⟩ 
-     —→⟨ β-ƛ V-⟨ V-zero , V-⊤ ⟩ ⟩  
-      `proj₁ `⟨ `zero , `tt ⟩ 
-    —→⟨ β-proj₁ V-zero V-⊤ ⟩  
-      `zero 
-    ∎
+_ : compute (gas 100) (from×⊤ · `⟨ `zero , `tt ⟩) ≡ `zero
+_ = refl
 
 from×⊤-case : ∀{A} →  ∅ ⊢ A `× `⊤ ⇒ A
 from×⊤-case = ƛ (case× (# 0) (case⊤ (# 0) (# 1)))
 
-
-_ : from×⊤-case · `⟨ `zero , `tt ⟩ —↠ `zero 
-_ = begin 
-      (ƛ case× (# 0) (case⊤ (# 0) (# 1))) · `⟨ `zero , `tt ⟩ 
-    —→⟨ β-ƛ V-⟨ V-zero , V-⊤ ⟩ ⟩
-      case× `⟨ `zero , `tt ⟩ (case⊤ (# 0) (# 1)) 
-    —→⟨ β-case× V-zero V-⊤ ⟩ 
-      case⊤ `tt `zero 
-    —→⟨ β-case⊤ ⟩ 
-      `zero 
-    ∎
-
+_ : compute (gas 100) (from×⊤-case · `⟨ `zero , `tt ⟩) ≡ `zero 
+_ = refl
 
 to⊎⊥ : ∀ {A} →  ∅ ⊢ A ⇒ A `⊎ `⊥
 to⊎⊥ = ƛ `inj₁ (# 0)
+
+-- only type check
+_ = ∅ ⊢  `List (`Bool `⊎ `⊥)
+_ = (to⊎⊥ · `true) `∷ ((to⊎⊥ · `false) `∷ `[])
 
 from⊎⊥ : ∀ {A} →  ∅ ⊢ A `⊎ `⊥ ⇒ A
 from⊎⊥ = ƛ case⊎ (# 0) (# 0) (case⊥ (# 0))
@@ -1058,229 +1106,61 @@ from⊎⊥ = ƛ case⊎ (# 0) (# 0) (case⊥ (# 0))
 mapL : ∀{A B} →  ∅ ⊢ (A ⇒ B) ⇒ `List A ⇒ `List B
 mapL = μ ƛ ƛ caseL (# 0) `[] (((# 3) · (# 1)) `∷ ((# 4) · (# 3) · (# 0)))
 
--- use eval
-_ : mapL · cube · (con 2 `∷ (con 3 `∷ `[])) —↠ (con 8 `∷ (con 27 `∷ `[])) 
-_ = (μ
-  (ƛ
-   (ƛ
-    caseL (` Z) `[]
-    ((` (S (S (S Z))) · ` (S Z)) `∷
-     (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
- · (ƛ ` Z `* ` Z `* ` Z)
- · (con 2 `∷ (con 3 `∷ `[]))
- —→⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
- (ƛ
-  (ƛ
-   caseL (` Z) `[]
-   ((` (S (S (S Z))) · ` (S Z)) `∷
-    ((μ
-      (ƛ
-       (ƛ
-        caseL (` Z) `[]
-        ((` (S (S (S Z))) · ` (S Z)) `∷
-         (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-     · ` (S (S (S Z)))
-     · ` Z))))
- · (ƛ ` Z `* ` Z `* ` Z)
- · (con 2 `∷ (con 3 `∷ `[]))
- —→⟨ ξ-·₁ (β-ƛ V-ƛ) ⟩
- (ƛ
-  caseL (` Z) `[]
-  (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · ` Z)))
- · (con 2 `∷ (con 3 `∷ `[]))
- —→⟨ β-ƛ (V-∷ V-con (V-∷ V-con V-[])) ⟩
- caseL (con 2 `∷ (con 3 `∷ `[])) `[]
- (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-  ((μ
-    (ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · ` Z))
- —→⟨ β-∷ V-con (V-∷ V-con V-[]) ⟩
- (((ƛ ` Z `* ` Z `* ` Z) · con 2) `∷
-  ((μ
-    (ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₁ (β-ƛ V-con) ⟩
- ((con 2 `* con 2 `* con 2) `∷
-  ((μ
-    (ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₁ (ξ-*₁ δ-*) ⟩
- ((con 4 `* con 2) `∷
-  ((μ
-    (ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₁ δ-* ⟩
- (con 8 `∷
-  ((μ
-    (ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₂ V-con (ξ-·₁ (ξ-·₁ β-μ)) ⟩
- (con 8 `∷
-  ((ƛ
-    (ƛ
-     caseL (` Z) `[]
-     ((` (S (S (S Z))) · ` (S Z)) `∷
-      ((μ
-        (ƛ
-         (ƛ
-          caseL (` Z) `[]
-          ((` (S (S (S Z))) · ` (S Z)) `∷
-           (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-       · ` (S (S (S Z)))
-       · ` Z))))
-   · (ƛ ` Z `* ` Z `* ` Z)
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₂ V-con (ξ-·₁ (β-ƛ V-ƛ)) ⟩
- (con 8 `∷
-  ((ƛ
-    caseL (` Z) `[]
-    (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-     ((μ
-       (ƛ
-        (ƛ
-         caseL (` Z) `[]
-         ((` (S (S (S Z))) · ` (S Z)) `∷
-          (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-      · (ƛ ` Z `* ` Z `* ` Z)
-      · ` Z)))
-   · (con 3 `∷ `[])))
- —→⟨ ξ-∷₂ V-con (β-ƛ (V-∷ V-con V-[])) ⟩
- (con 8 `∷
-  caseL (con 3 `∷ `[]) `[]
-  (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · ` Z)))
- —→⟨ ξ-∷₂ V-con (β-∷ V-con V-[]) ⟩
- (con 8 `∷
-  (((ƛ ` Z `* ` Z `* ` Z) · con 3) `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₁ (β-ƛ V-con)) ⟩
- (con 8 `∷
-  ((con 3 `* con 3 `* con 3) `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₁ (ξ-*₁ δ-*)) ⟩
- (con 8 `∷
-  ((con 9 `* con 3) `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₁ δ-*) ⟩
- (con 8 `∷
-  (con 27 `∷
-   ((μ
-     (ƛ
-      (ƛ
-       caseL (` Z) `[]
-       ((` (S (S (S Z))) · ` (S Z)) `∷
-        (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₂ V-con (ξ-·₁ (ξ-·₁ β-μ))) ⟩
- (con 8 `∷
-  (con 27 `∷
-   ((ƛ
-     (ƛ
-      caseL (` Z) `[]
-      ((` (S (S (S Z))) · ` (S Z)) `∷
-       ((μ
-         (ƛ
-          (ƛ
-           caseL (` Z) `[]
-           ((` (S (S (S Z))) · ` (S Z)) `∷
-            (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-        · ` (S (S (S Z)))
-        · ` Z))))
-    · (ƛ ` Z `* ` Z `* ` Z)
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₂ V-con (ξ-·₁ (β-ƛ V-ƛ))) ⟩
- (con 8 `∷
-  (con 27 `∷
-   ((ƛ
-     caseL (` Z) `[]
-     (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-      ((μ
-        (ƛ
-         (ƛ
-          caseL (` Z) `[]
-          ((` (S (S (S Z))) · ` (S Z)) `∷
-           (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-       · (ƛ ` Z `* ` Z `* ` Z)
-       · ` Z)))
-    · `[])))
- —→⟨ ξ-∷₂ V-con (ξ-∷₂ V-con (β-ƛ V-[])) ⟩
- (con 8 `∷
-  (con 27 `∷
-   caseL `[] `[]
-   (((ƛ ` Z `* ` Z `* ` Z) · ` (S Z)) `∷
-    ((μ
-      (ƛ
-       (ƛ
-        caseL (` Z) `[]
-        ((` (S (S (S Z))) · ` (S Z)) `∷
-         (` (S (S (S (S Z)))) · ` (S (S (S Z))) · ` Z)))))
-     · (ƛ ` Z `* ` Z `* ` Z)
-     · ` Z))))
- —→⟨ ξ-∷₂ V-con (ξ-∷₂ V-con β-[]) ⟩ (con 8 `∷ (con 27 `∷ `[])) ∎
+--type check
+_ = ∅ ⊢  `List `Bool
+_ = mapL · from⊎⊥ · (to⊎⊥ · `true) `∷ ((to⊎⊥ · `false) `∷ `[])
 
- 
+--convertion check
+_ : compute (gas 100) 
+  (mapL · from⊎⊥ · (to⊎⊥ · `true) `∷ ((to⊎⊥ · `false) `∷ `[])) ≡ (`true `∷ (`false `∷ `[]))
+_ = refl
+
+{-
+reduceL : ∅ ⊢ (A ⇒ A ⇒ B) ⇒ B ⇒  `List A ⇒ B
+reduceL = μ rL ⇒ ƛ f ⇒ ƛ b ⇒ ƛ xs ⇒
+         caseL xs
+           [[]⇒ b
+           | x ∷ xs ⇒  rL · f · (f · x · b) · xs ]
+
+bool⊎con-to-con : ∅ ⊢ (`Bool `⊎ `ℕ)  ⇒ `ℕ 
+bool⊎con-to-con = ƛ s ⇒ 
+          case⊎ s
+           [inj₁ b ⇒ caseB b [`true ⇒ con 1 | `false ⇒ con 0]
+           | inj₂ con x ⇒  con x ]
+
+mul-bool×con : ∅ ⊢ `Bool `× Nat  ⇒ Nat 
+mul-bool×con = ƛ p ⇒ caseB (proj₁ p) [`true ⇒ (proj₂ p) | `false ⇒ con 0]
+-}
+reduceL : ∀{A B} →  ∅ ⊢ (A ⇒ B ⇒ B) ⇒ B ⇒ `List A ⇒ B
+reduceL = μ ƛ ƛ ƛ caseL (# 0) (# 1) ((# 5) · (# 4) · ((# 4) · (# 1) · (# 3)) · (# 0))
+
+mul : ∅ ⊢ Nat ⇒ Nat ⇒ Nat 
+mul = ƛ ƛ (# 0) `* (# 1)
+
+_ : compute (gas 100) 
+    (reduceL · mul · con 1 ·  (con 2 `∷ (con 1011 `∷ `[]))) ≡ con 2022
+_ = refl
+
+bool⊎con-to-con : ∅ ⊢ (`Bool `⊎ Nat)  ⇒ Nat 
+bool⊎con-to-con = ƛ case⊎ (# 0) (caseB (# 0) (con 1) (con 0)) (# 0)
+
+mul-bool×con : ∅ ⊢ `Bool `× Nat  ⇒ Nat 
+mul-bool×con = ƛ caseB (`proj₁ (# 0)) (`proj₂ (# 0)) (con 0)
+
+_ : compute (gas 100) 
+  (mapL · bool⊎con-to-con · 
+    ((`inj₁ `false) `∷ ((`inj₂ (con 2)) `∷ ((`inj₁ `true) `∷ `[])))) ≡ (con 0 `∷ (con 2 `∷ (con 1 `∷ `[])))
+_ = refl
+
+_ : compute (gas 100)
+  (mapL · mul-bool×con · (`⟨ `false , con 2020 ⟩  `∷ (`⟨ `false , con 2021 ⟩ `∷ (`⟨ `true , con 2022 ⟩ `∷ `[])))) ≡
+    (con 0 `∷ (con 0 `∷ (con 2022 `∷ `[])))
+_ = refl
+
+
+_ : compute (gas 100) 
+  (mapL · cube · (con 2 `∷ (con 3 `∷ (con 5 `∷ `[])))) ≡ (con 8 `∷ (con 27 `∷ (con 125 `∷ `[]))) 
+_ = refl
 
 {-
 We construct a bool expression and check its bool table.
@@ -1294,7 +1174,7 @@ a b c   (!a && b) || c
 1 1 0         0
 1 1 1         1
 
-And we can see the result below matches the expected bool table.
+And we can see the Result below matches the expected bool table.
 
 (correspond java code for computing bool table:
   public static void main(String[] args) {
@@ -1314,116 +1194,34 @@ bool-expression1 : ∅ ⊢ `Bool ⇒ `Bool ⇒ `Bool ⇒ `Bool
 bool-expression1 = ƛ ƛ ƛ ((`! (# 2)) `&& (# 1)) `|| (# 0)
  
 
-_ : bool-expression1 · `false · `false · `false —↠ `false
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) ·
- `false
- · `false
- · `false
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-false)) ⟩
- (ƛ (ƛ (((`! `false) `&& (` (S Z))) `|| (` Z)))) · `false · `false
- —→⟨ ξ-·₁ (β-ƛ V-false) ⟩
- (ƛ (((`! `false) `&& `false) `|| (` Z))) · `false —→⟨ β-ƛ V-false ⟩
- (((`! `false) `&& `false) `|| `false) —→⟨ ξ-or₁ (ξ-and₁ β-not-true)
- ⟩
- ((`true `&& `false) `|| `false) —→⟨ ξ-or₁ β-and-false₁ ⟩
- (`false `|| `false) —→⟨ β-or-false₁ ⟩ `false ∎
+_ : compute (gas 100) 
+  (bool-expression1 · `false · `false · `false) ≡ `false
+_ = refl
 
+_ : compute (gas 100) 
+  (bool-expression1 · `false · `false · `true) ≡ `true
+_ = refl
 
-_ : bool-expression1 · `false · `false · `true —↠ `true
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) ·
- `false
- · `false
- · `true
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-false)) ⟩
- (ƛ (ƛ (((`! `false) `&& (` (S Z))) `|| (` Z)))) · `false · `true
- —→⟨ ξ-·₁ (β-ƛ V-false) ⟩
- (ƛ (((`! `false) `&& `false) `|| (` Z))) · `true —→⟨ β-ƛ V-true ⟩
- (((`! `false) `&& `false) `|| `true) —→⟨ ξ-or₁ (ξ-and₁ β-not-true)
- ⟩
- ((`true `&& `false) `|| `true) —→⟨ ξ-or₁ β-and-false₁ ⟩
- (`false `|| `true) —→⟨ β-or-true₃ ⟩ `true ∎
+_ : compute (gas 100) 
+  (bool-expression1 · `false · `true · `false) ≡ `true
+_ = refl
 
+_ : compute (gas 100) 
+  (bool-expression1 · `false · `true · `true) ≡ `true
+_ = refl
 
-_ : bool-expression1 · `false · `true · `false —↠ `true
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) ·
- `false
- · `true
- · `false
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-false)) ⟩
- (ƛ (ƛ (((`! `false) `&& (` (S Z))) `|| (` Z)))) · `true · `false
- —→⟨ ξ-·₁ (β-ƛ V-true) ⟩
- (ƛ (((`! `false) `&& `true) `|| (` Z))) · `false —→⟨ β-ƛ V-false ⟩
- (((`! `false) `&& `true) `|| `false) —→⟨ ξ-or₁ (ξ-and₁ β-not-true)
- ⟩
- ((`true `&& `true) `|| `false) —→⟨ ξ-or₁ β-and-true₁ ⟩
- (`true `|| `false) —→⟨ β-or-true₂ ⟩ `true ∎
+_ : compute (gas 100) 
+  (bool-expression1 · `true · `false · `false) ≡ `false
+_ = refl
 
+_ : compute (gas 100) 
+  (bool-expression1 · `true · `false · `true) ≡ `true
+_ = refl
 
-_ : bool-expression1 · `false · `true · `true —↠ `true
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) ·
- `false
- · `true
- · `true
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-false)) ⟩
- (ƛ (ƛ (((`! `false) `&& (` (S Z))) `|| (` Z)))) · `true · `true —→⟨
- ξ-·₁ (β-ƛ V-true) ⟩
- (ƛ (((`! `false) `&& `true) `|| (` Z))) · `true —→⟨ β-ƛ V-true ⟩
- (((`! `false) `&& `true) `|| `true) —→⟨ ξ-or₁ (ξ-and₁ β-not-true) ⟩
- ((`true `&& `true) `|| `true) —→⟨ ξ-or₁ β-and-true₁ ⟩
- (`true `|| `true) —→⟨ β-or-true₁ ⟩ `true ∎
+_ : compute (gas 100) 
+  (bool-expression1 · `true · `true · `false) ≡ `false
+_ = refl
 
-
-_ : bool-expression1 · `true · `false · `false —↠ `false
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) · `true
- · `false
- · `false
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-true)) ⟩
- (ƛ (ƛ (((`! `true) `&& (` (S Z))) `|| (` Z)))) · `false · `false
- —→⟨ ξ-·₁ (β-ƛ V-false) ⟩
- (ƛ (((`! `true) `&& `false) `|| (` Z))) · `false —→⟨ β-ƛ V-false ⟩
- (((`! `true) `&& `false) `|| `false) —→⟨ ξ-or₁ (ξ-and₁ β-not-false)
- ⟩
- ((`false `&& `false) `|| `false) —→⟨ ξ-or₁ β-and-false₃ ⟩
- (`false `|| `false) —→⟨ β-or-false₁ ⟩ `false ∎
-
-
-_ : bool-expression1 · `true · `false · `true —↠ `true
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) · `true
- · `false
- · `true
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-true)) ⟩
- (ƛ (ƛ (((`! `true) `&& (` (S Z))) `|| (` Z)))) · `false · `true —→⟨
- ξ-·₁ (β-ƛ V-false) ⟩
- (ƛ (((`! `true) `&& `false) `|| (` Z))) · `true —→⟨ β-ƛ V-true ⟩
- (((`! `true) `&& `false) `|| `true) —→⟨ ξ-or₁ (ξ-and₁ β-not-false)
- ⟩
- ((`false `&& `false) `|| `true) —→⟨ ξ-or₁ β-and-false₃ ⟩
- (`false `|| `true) —→⟨ β-or-true₃ ⟩ `true ∎
-
-
-
-_ : bool-expression1 · `true · `true · `false —↠ `false
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) · `true
- · `true
- · `false
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-true)) ⟩
- (ƛ (ƛ (((`! `true) `&& (` (S Z))) `|| (` Z)))) · `true · `false —→⟨
- ξ-·₁ (β-ƛ V-true) ⟩
- (ƛ (((`! `true) `&& `true) `|| (` Z))) · `false —→⟨ β-ƛ V-false ⟩
- (((`! `true) `&& `true) `|| `false) —→⟨ ξ-or₁ (ξ-and₁ β-not-false)
- ⟩
- ((`false `&& `true) `|| `false) —→⟨ ξ-or₁ β-and-false₂ ⟩
- (`false `|| `false) —→⟨ β-or-false₁ ⟩ `false ∎
-
-
-_ :  bool-expression1 · `true · `true · `true —↠ `true 
-_ = (ƛ (ƛ (ƛ (((`! (` (S (S Z)))) `&& (` (S Z))) `|| (` Z))))) · `true
- · `true
- · `true
- —→⟨ ξ-·₁ (ξ-·₁ (β-ƛ V-true)) ⟩
- (ƛ (ƛ (((`! `true) `&& (` (S Z))) `|| (` Z)))) · `true · `true —→⟨
- ξ-·₁ (β-ƛ V-true) ⟩
- (ƛ (((`! `true) `&& `true) `|| (` Z))) · `true —→⟨ β-ƛ V-true ⟩
- (((`! `true) `&& `true) `|| `true) —→⟨ ξ-or₁ (ξ-and₁ β-not-false) ⟩
- ((`false `&& `true) `|| `true) —→⟨ ξ-or₁ β-and-false₂ ⟩
- (`false `|| `true) —→⟨ β-or-true₃ ⟩ `true ∎
+_ : compute (gas 100) 
+  (bool-expression1 · `true · `true · `true) ≡ `true 
+_ = refl 
