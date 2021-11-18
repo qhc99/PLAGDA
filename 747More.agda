@@ -1040,12 +1040,12 @@ eval (gas (suc m)) L with progress L
 ...    | steps M—↠N fin                  =  steps (L —→⟨ L—→M ⟩ M—↠N) fin
 
 compute :  ∀{A} → Gas → (L : ∅ ⊢ A) → ∅ ⊢ A
-compute (gas a) L = extract-res (gas a) (eval (gas a) L)
+compute g L = extract-Steps g (eval g L)
   where
-  extract-res : ∀{A} {L : ∅ ⊢ A} → Gas → Steps L → ∅ ⊢ A
-  extract-res (gas zero) (steps {p} {q} x x₁) = q
-  extract-res (gas (suc amount)) (steps {p} {q} (_ ∎) x₁) = p
-  extract-res (gas (suc amount)) (steps (_ —→⟨ x ⟩ x₂) x₁)  = extract-res (gas amount) (steps x₂ x₁)
+  extract-Steps : ∀{A} {L : ∅ ⊢ A} → Gas → Steps L → ∅ ⊢ A
+  extract-Steps (gas zero) (steps {_} {q} _ _) = q
+  extract-Steps (gas (suc amount)) (steps {_} {q} (_ ∎) _) = q
+  extract-Steps (gas (suc amount)) (steps (_ —→⟨ _ ⟩ x₂) x₁)  = extract-Steps (gas amount) (steps x₂ x₁)
 
 
 cube : ∅ ⊢ Nat ⇒ Nat
