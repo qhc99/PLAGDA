@@ -8,8 +8,11 @@ open import Data.Nat using (ℕ; zero; suc; _+_; _∸_) renaming ( _≤?_ to _�
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl; cong; sym)
+open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Data.Nat.Properties using (+-comm; +-assoc; +-identityʳ)
 --open import plfa.part1.Decidable using (_≤?_;_<?_)
 
 open import Isomorphism 
@@ -33,6 +36,7 @@ twos = mk-≃ twos-to twos-from twos-to-from twos-from-to
     twos-from (Bool.true , Bool.false) = inj₂ Bool.false
     twos-from (Bool.true , Bool.true) = inj₁ Bool.true
 
+    -- to prove the two rules below, we need to care about the matching relation above
     twos-to-from : (x : Bool ⊎ Bool) → twos-from (twos-to x) ≡ x
     twos-to-from (inj₁ Bool.false) = refl
     twos-to-from (inj₁ Bool.true) = refl
@@ -97,6 +101,7 @@ record Wrap (n : ℕ) :  Set where
 Wrap-suc : ∀{t : ℕ} →  Wrap t → Wrap (suc t)
 Wrap-suc (mk-Wrap natural) = mk-Wrap (suc natural)
 
+-- since suc is not type "ℕ → Set", we create a "Wrap" to pass around the limitation
 -- induction add suc on "m" but at base we set it as "n"
 plus : ℕ → ℕ → ℕ
 plus m n = Wrap.natural (indℕ Wrap (mk-Wrap n) (Wrap-suc) m) 
@@ -139,31 +144,47 @@ Int≃ℤ = mk-≃ Int≃ℤ-to Int≃ℤ-from Int≃ℤ-to-from Int≃ℤ-from-
     Int≃ℤ-from-to (ℤ.negsuc n) = refl
 
 
-⌊_⌋ : ∀ {A : Set} → Dec A → Bool
-⌊ yes x ⌋  =  Bool.true
-⌊ no ¬x ⌋  =  Bool.false
-
 -- implement plus for Int
 _+Int_ : Int → Int → Int
 pos x +Int pos x₁ = pos (x + x₁ + 1)
 pos x +Int zer = pos x
-pos x +Int neg x₁ with ⌊ x ≤D x₁ ⌋ | ⌊ x₁ ≤D x ⌋
-... | Bool.false | Bool.false  = zer -- ?!
-... | Bool.false | Bool.true = neg (x₁ ∸ x ∸ 1)
-... | Bool.true | Bool.false = pos (x ∸ x₁ ∸ 1)
-... | Bool.true | Bool.true = zer
-zer +Int y = y
-neg x +Int pos x₁ with ⌊ x ≤D x₁ ⌋ | ⌊ x₁ ≤D x ⌋
-... | Bool.false | Bool.false = zer
-... | Bool.false | Bool.true = neg (x ∸ x₁ ∸ 1)
-... | Bool.true | Bool.false = pos (x₁ ∸ x ∸ 1)
-... | Bool.true | Bool.true = zer
+pos zero +Int neg zero = zer
+pos zero +Int neg (suc x₁) = neg x₁
+pos (suc x) +Int neg zero = pos x
+pos (suc x) +Int neg (suc x₁) = pos x +Int neg x₁
+zer +Int pos x = pos x
+zer +Int zer = zer
+zer +Int neg x = neg x
+neg zero +Int pos zero = zer
+neg zero +Int pos (suc x₁) = pos x₁
+neg (suc x) +Int pos zero = neg x
+neg (suc x) +Int pos (suc x₁) = neg x +Int pos x₁
 neg x +Int zer = neg x
 neg x +Int neg x₁ = neg (x + x₁ + 1)
 
+
 -- show that it is equivalent
 +-equiv : (x y : Int) → x +Int y ≡ from Int≃ℤ (to Int≃ℤ x +ℤ to Int≃ℤ y)
-+-equiv x y = {!!}
++-equiv (pos x) (pos x₁) rewrite +-comm 1 x₁ | sym (+-assoc x x₁ 1) = refl
++-equiv (pos x) zer rewrite +-identityʳ x = refl
++-equiv (pos zero) (neg zero) = refl
++-equiv (pos zero) (neg (suc x₁)) = refl
++-equiv (pos (suc x)) (neg zero) = refl
++-equiv (pos (suc x)) (neg (suc x₁)) = +-equiv (pos x) (neg x₁)
++-equiv zer (pos x) = refl
++-equiv zer zer = refl
++-equiv zer (neg x) = refl
++-equiv (neg zero) (pos zero) = refl
++-equiv (neg zero) (pos (suc x₁)) = refl
++-equiv (neg (suc x)) (pos zero) = refl
++-equiv (neg (suc x)) (pos (suc x₁)) = +-equiv (neg x) (pos x₁)
++-equiv (neg zero) zer = refl
++-equiv (neg (suc x)) zer = refl
++-equiv (neg zero) (neg zero) = refl
++-equiv (neg zero) (neg (suc x₁)) rewrite +-comm x₁ 1 = refl
++-equiv (neg (suc x)) (neg zero) rewrite +-identityʳ x | +-comm x 1 = refl
++-equiv (neg (suc x)) (neg (suc x₁)) rewrite +-comm (suc x₁) 1 | +-comm (x + suc x₁) 1 = refl
+
 
 -- define _<_ for Int
 _<_ : Int → Int → Set
