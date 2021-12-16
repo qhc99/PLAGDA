@@ -235,7 +235,7 @@ than case spliting only one variable.
 
 The First hole has goal: "zero < suc n", so we fill "z<s"
 
-The Second hole has goal:　"suc m < suc n", which is the ouput is "s<s". Input "s<s" and refine, 
+The Second hole has goal: "suc m < suc n", which is the ouput is "s<s". Input "s<s" and refine, 
 we have goal: "m < n", and context: "n<p : n₁ < n", "m<n : m < n₁". 
 By induction, we can fill "<-trans m<n n<p" here.
 --}

@@ -319,7 +319,7 @@ fold-Tree f g (node t x t₁) = g (fold-Tree f g t) x (fold-Tree f g t₁)
 -- PLFA exercise: the downFrom function computes a countdown list
 -- Prove an equality about its sum
 
-{-
+
 downFrom : ℕ → List ℕ
 downFrom zero     =  []
 downFrom (suc n)  =  n ∷ downFrom n
@@ -330,7 +330,21 @@ sum-∷ : ∀ (x : ℕ) → (xs : List ℕ) → sum (x ∷ xs) ≡ x + sum xs
 sum-∷ x [] = refl
 sum-∷ x (x₁ ∷ xs) = refl
 
-open import 747Induction using (*-+-rdistrib)
+open import 747Induction using (*-+-rdistrib; *-comm; +-comm)
+
+n*suc-n≡n*n+n : ∀ (n : ℕ) → n * suc n ≡ n * n + n
+n*suc-n≡n*n+n n rewrite *-comm n (suc n) | +-comm n (n * n)  = refl
+
+monus-self : ∀ (n : ℕ) → n ∸ n ≡ 0
+monus-self zero = refl
+monus-self (suc n) = monus-self n
+
+n*[n∸1]≡n*n∸n : ∀ (n : ℕ) → n * (n ∸ 1) ≡ n * n ∸ n
+n*[n∸1]≡n*n∸n zero = refl
+n*[n∸1]≡n*n∸n (suc n) 
+  rewrite 
+  n*suc-n≡n*n+n n | 
+  sym (+-assoc n (n * n) n) = {!   !}
 
 sum-downFrom : ∀ (n : ℕ)
   → sum (downFrom n) * 2 ≡ n * (n ∸ 1)
@@ -338,9 +352,10 @@ sum-downFrom zero = refl
 sum-downFrom (suc n) 
   rewrite 
   sum-∷ n (downFrom n) | 
-  *-+-rdistrib n (sum (downFrom n)) 2 | 
-  sum-downFrom n = {!   !}
--}
+  *-+-rdistrib n (sum (downFrom n)) 2 |
+  sum-downFrom n | n*[n∸1]≡n*n∸n n = {!   !}
+
+
 
 
 -- 'Monoid' is a mathematical term for a set with an associative operator
@@ -541,11 +556,11 @@ Any-++-⇔ {A} {P}  xs ys = record { to = Any-++-⇔-to ; from = Any-++-⇔-from
 
 
 -- PLFA exercise: Show that the equivalence All-++-⇔ can be extended to an isomorphism.
-{-
+
 All-++-≃ : ∀ {A : Set} {P : A → Set} (xs ys : List A) →
   All P (xs ++ ys) ≃ (All P xs × All P ys)
 All-++-≃ xs ys = {!   !}
--}
+
 -- PLFA exercise: Here is a universe-polymorphic version of composition,
 -- and a version of DeMorgan's law for Any and All expressed using it.
 
@@ -553,18 +568,18 @@ _∘′_ : ∀ {ℓ₁ ℓ₂ ℓ₃ : Level} {A : Set ℓ₁} {B : Set ℓ₂} 
   → (B → C) → (A → B) → A → C
 (g ∘′ f) x  =  g (f x)
 
-{-
+
 ¬Any≃All¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
   → (¬_ ∘′ Any P) xs ≃ All (¬_ ∘′ P) xs
 ¬Any≃All¬ P xs = {!!}
--}
+
 
 -- Can we prove the following? If not, explain why.
-{-
+
 ¬All≃Any¬ : ∀ {A : Set} (P : A → Set) (xs : List A)
     → (¬_ ∘′ All P) xs ≃ Any (¬_ ∘′ P) xs
-¬All≃Any¬ = {!   !}-
--}
+¬All≃Any¬ = {!   !}
+
 -- End of PLFA exercise
 
 -- Decidability of All
@@ -590,16 +605,16 @@ All? P? (x ∷ xs) | no ¬p | _ = no (λ { (x ∷ x₁) → ¬p x})
 
 -- PLFA exercise: repeat above for Any
 
-{-
+
 Any? : ∀ {A : Set} {P : A → Set} → Decidable P → Decidable (Any P)
 Any? dp = {!   !}
--}
+
 
 -- PLFA exercises: All-∀ and Any-∃
 -- You will need the stronger version of extensionality
 -- (for dependent function types) given in PLFA Isomorphism.
 
-{-
+
 All-∀-iso = ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → x ∈ xs → P x
 Any-∃-iso = ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → ∃[ x ] (x ∈ xs × P x)
 
@@ -608,12 +623,11 @@ All-∀-≃ = {!   !}
 
 Any-∃-≃ : ∀ {A : Set} {x : A} {P : A → Set} {xs : List A} → Any P xs ≃ ∃[ x ] (x ∈ xs × P x)
 Any-∃-≃ = {!   !}
--}
+
 
 -- PLFA exercise: a version of 'filter' for decidable predicates
 
-{-
+
 filter? : ∀ {A : Set} {P : A → Set}
   → (P? : Decidable P) → List A → ∃[ ys ]( All P ys )
 filter? P? xs = {!   !}
--}

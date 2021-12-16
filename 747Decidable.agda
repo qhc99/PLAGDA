@@ -196,8 +196,8 @@ suc m ≡ℕ? suc n with m ≡ℕ? n
 
 _≤?′_ : ∀ (m n : ℕ) → Dec (m ≤ n)
 m ≤?′ n with m ≤ᵇ n | ≤ᵇ→≤ m n | ≤→≤ᵇ {m} {n}
-(m ≤?′ n) | true  | r | s = yes (r tt)
-(m ≤?′ n) | false | r | s = no s
+... | true  | r | s = yes (r tt)
+... | false | r | s = no s
 
 -- Erasing Dec down to Bool (or "isYes").
 
