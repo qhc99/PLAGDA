@@ -4,7 +4,7 @@ module Exam where
 
 open import Data.Bool using (Bool)
 open import Data.Integer using (ℤ) renaming (_+_ to _+ℤ_)
-open import Data.Nat using (ℕ; zero; suc; _+_; _∸_) renaming ( _≤?_ to _≤D_)
+open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s) -- renaming ( _<?_ to _<D_; _<_ to _<ℕ_)
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_)
@@ -185,14 +185,93 @@ neg x +Int neg x₁ = neg (x + x₁ + 1)
 +-equiv (neg (suc x)) (neg zero) rewrite +-identityʳ x | +-comm x 1 = refl
 +-equiv (neg (suc x)) (neg (suc x₁)) rewrite +-comm (suc x₁) 1 | +-comm (x + suc x₁) 1 = refl
 
+-- For easier life not using standard library...
+data _<ℕ_ : ℕ → ℕ → Set where
+
+  z<s : ∀ {n : ℕ}
+      ------------
+    → zero <ℕ suc n
+
+  s<s : ∀ {m n : ℕ}
+    → m <ℕ n
+      -------------
+    → suc m <ℕ suc n
 
 -- define _<_ for Int
-_<_ : Int → Int → Set
-a < b = {!   !}
+data _<_ : Int → Int → Set where
+    zer<pos : ∀{n : ℕ}
+        → zer < pos n
+
+    neg<zer : ∀{n : ℕ}
+        → neg n < zer
+    
+    neg<pos : ∀{n n₁ : ℕ}
+        → neg n < pos n₁
+    
+    pz<pos : ∀{n : ℕ} 
+        → zero <ℕ n
+        → pos zero < pos n
+
+    suc-pz<pos : ∀{a b : ℕ}
+        → pos a < pos b
+        → pos (suc a) < pos (suc b)
+
+    neg<nz : ∀{n : ℕ}
+        → zero <ℕ n
+        → neg n < neg zero   
+    
+    suc-neg<nz : ∀{a b : ℕ}
+        → neg a < neg b
+        → neg (suc a) < neg (suc b) 
+
+
+¬x-<ℕ-x : ∀(x : ℕ) → ¬ (x <ℕ x)
+¬x-<ℕ-x zero = λ ()
+¬x-<ℕ-x (suc x) = λ { (s<s x<x) → ¬x-<ℕ-x x x<x }
+
+¬pos-x<pos-x : ∀(x : ℕ) → ¬ (pos x < pos x)
+¬pos-x<pos-x zero = λ {(pz<pos z<z) → ¬x-<ℕ-x zero z<z}
+¬pos-x<pos-x (suc x) = λ {(suc-pz<pos x<x) → ¬pos-x<pos-x x x<x } 
+
+¬neg-x<neg-x : ∀(x : ℕ) → ¬ (neg x < neg x)
+¬neg-x<neg-x zero = λ {(neg<nz z<z) → ¬x-<ℕ-x zero z<z}
+¬neg-x<neg-x (suc x) = λ {(suc-neg<nz x<x) → ¬neg-x<neg-x x x<x}
+
+suc-both-¬pos-a<pos-b : ∀{a b : ℕ} → ¬ (pos a < pos b) → ¬ (pos (suc a) < pos (suc b))
+suc-both-¬pos-a<pos-b {zero} {zero} = λ {x (suc-pz<pos z<z) → x z<z }
+suc-both-¬pos-a<pos-b {zero} {suc b} = λ z _ → z (pz<pos z<s)
+suc-both-¬pos-a<pos-b {suc a} {zero} = λ {x (suc-pz<pos x<x) → x x<x }
+suc-both-¬pos-a<pos-b {suc a} {suc b} = λ {x (suc-pz<pos a<b) → x a<b }
+
+-- symmetric as above
+suc-both-¬neg-a<neg-b : ∀{a b : ℕ} → ¬ (neg a < neg b) → ¬ (neg (suc a) < neg (suc b))
+suc-both-¬neg-a<neg-b {zero} {zero} = λ {x (suc-neg<nz z<z) → x z<z }
+suc-both-¬neg-a<neg-b {zero} {suc b} = λ {x (suc-neg<nz x<x) → x x<x }
+suc-both-¬neg-a<neg-b {suc a} {zero} = λ z _ → z (neg<nz z<s)
+suc-both-¬neg-a<neg-b {suc a} {suc b} = λ {x (suc-neg<nz a<b) → x a<b }
+
 
 -- show that this is a decidable property
 _<?_ : ∀ (x y : Int) → Dec (x < y)
-x <? y = {!!}
+pos zero <? pos zero = no λ x → ¬pos-x<pos-x zero x
+pos zero <? pos (suc x₁) = yes (pz<pos z<s)
+pos (suc x) <? pos zero = no (λ ())
+pos (suc x) <? pos (suc x₁) with pos x <? pos x₁
+... | no ¬p = no (suc-both-¬pos-a<pos-b (λ x₂ → ¬p x₂))
+... | yes p = yes (suc-pz<pos p)
+pos x <? zer = no (λ ())
+pos x <? neg x₁ = no (λ ())
+zer <? pos x = yes zer<pos
+zer <? zer = no (λ ())
+zer <? neg x = no (λ ())
+neg x <? pos x₁ = yes neg<pos
+neg x <? zer = yes neg<zer
+neg zero <? neg zero = no (λ x → ¬neg-x<neg-x zero x)
+neg zero <? neg (suc x₁) = no (λ ())
+neg (suc x) <? neg zero = yes (neg<nz z<s)
+neg (suc x) <? neg (suc x₁)  with neg x <? neg x₁
+... | no ¬p = no (suc-both-¬neg-a<neg-b (λ x₂ → ¬p x₂))
+... | yes p = yes (suc-neg<nz p)
 
 --
 
@@ -235,3 +314,4 @@ x <? y = {!!}
 -- Pick any 2 of them, and answer them.
 
 ---------------------------
+ 
