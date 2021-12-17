@@ -4,7 +4,7 @@ module Exam where
 
 open import Data.Bool using (Bool)
 open import Data.Integer using (ℤ) renaming (_+_ to _+ℤ_)
-open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s) 
+open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s; _*_)  renaming (_<?_ to _<D_)
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_)
@@ -13,7 +13,8 @@ open Eq using (_≡_; refl; cong; sym)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Nat.Properties using (+-comm; +-assoc; +-identityʳ)
-
+open import Data.List.Base as List using (List; []; _∷_; length) renaming (map to mapList)
+--open import Data.List.Extrema using (max)
 
 open import Isomorphism 
 open _≃_
@@ -282,12 +283,45 @@ neg (suc x) <? neg (suc x₁)  with neg x <? neg x₁
 -- 2) there is no data in the noces
 -- (so that you'll need two constructors).
 
--- data Rose (A : Set) : Set where
+-- awkward imitation with std library, but it is best I can do before ddl.
+data Rose (A : Set)  : ℕ →  Set where
+    leaf : A → Rose A 0
+    node : ∀ {n} → A → (ts : List (Rose A n)) → Rose A (1 + n)
+
+mapRose : ∀{A B i} → (A → B) → Rose A i → Rose B i
+mapRose f (leaf x) = leaf (f x)
+mapRose f (node x ts) = node (f x) (mapList (mapRose f) ts)
+
+foldrRose : ∀{A B n} →  (A → (List B) → B) → Rose A n → B
+foldrRose f (leaf x) = f x []
+foldrRose f (node x ts) = f x (mapList (foldrRose f) ts)
+
+⌊_⌋ : ∀ {A : Set} → Dec A → Bool
+⌊ yes x ⌋  =  Bool.true
+⌊ no ¬x ⌋  =  Bool.false
+
+maxℕ : ℕ → ℕ → ℕ
+maxℕ a b with ⌊ a <D b ⌋
+... | Bool.false = a
+... | Bool.true = b
+
+maxListℕ : ℕ → List ℕ → ℕ
+maxListℕ a [] = a
+maxListℕ a (x ∷ ls) = maxListℕ (maxℕ x a) ls 
+
+depthRose : ∀{A i} → Rose A i → ℕ
+depthRose (leaf x) = 0
+depthRose (node x ts) = suc (maxListℕ zero (mapList depthRose ts))
 
 -- implement 'map', 'foldr' and 'depth'. Consider leaves to have depth 0.
 -- use 'foldr' to get all the data from a Rose tree into a (flat) list
 
 -- build a Rose tree with depth 5 that contains *NO* data at all.
+
+data NULL : Set where
+
+_ : Rose NULL 5
+_ = {! node NULL (leaf NULL ∷ [])  !}
 
 -- Bonus: build a variant of the above
 -- data Rose′ (A : Set) : ℕ → ℕ → Set where
