@@ -4,7 +4,7 @@ module Exam where
 
 open import Data.Bool using (Bool)
 open import Data.Integer using (ℤ) renaming (_+_ to _+ℤ_)
-open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s) -- renaming ( _<?_ to _<D_; _<_ to _<ℕ_)
+open import Data.Nat using (ℕ; zero; suc; _+_; _∸_; _≤_; z≤n; s≤s) 
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_)
@@ -13,7 +13,7 @@ open Eq using (_≡_; refl; cong; sym)
 open Eq.≡-Reasoning using (begin_; _≡⟨⟩_; step-≡; _∎)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Data.Nat.Properties using (+-comm; +-assoc; +-identityʳ)
---open import plfa.part1.Decidable using (_≤?_;_<?_)
+
 
 open import Isomorphism 
 open _≃_
@@ -185,7 +185,7 @@ neg x +Int neg x₁ = neg (x + x₁ + 1)
 +-equiv (neg (suc x)) (neg zero) rewrite +-identityʳ x | +-comm x 1 = refl
 +-equiv (neg (suc x)) (neg (suc x₁)) rewrite +-comm (suc x₁) 1 | +-comm (x + suc x₁) 1 = refl
 
--- For easier life not using standard library...
+-- For easier life not using standard library as "_<_" is defined by "_≤_"... 
 data _<ℕ_ : ℕ → ℕ → Set where
 
   z<s : ∀ {n : ℕ}
@@ -312,6 +312,36 @@ neg (suc x) <? neg (suc x₁)  with neg x <? neg x₁
 
 -- There are 4 Quiz questions at the end of https://plfa.github.io/Properties/.
 -- Pick any 2 of them, and answer them.
+
+{-
+Quiz
+Suppose we add a new term zap with the following reduction rule
+
+-------- β-zap
+M —→ zap
+and the following typing rule:
+
+----------- ⊢zap
+Γ ⊢ zap ⦂ A
+Which of the following properties remain true in the presence of these rules? For each property, write either “remains true” or “becomes false.” If a property becomes false, give a counterexample:
+---------------------------------------------------------------------------------------------
+Determinism of step : false, any term can either be reduced as usual or be reduced to "zap".
+
+Progress : true, as long as we do not require determinism.
+
+Preservation : true, zap has the same type as original term.
+-}
+
+{-
+Quiz
+Suppose instead that we remove the rule ξ·₁ from the step relation. Which of the following properties remain true in the absence of this rule? For each one, write either “remains true” or else “becomes false.” If a property becomes false, give a counterexample:
+-----------------------------------------------------------------------------------------
+Determinism of step : true, no ambiguity is introduced.
+
+Progress : false, we cannot reduce a term to a value when the term needs "ξ·₁" to reduce, which is essential.
+
+Preservation : true, the type of a term is intact thought the term cannot be reduced to a value. 
+-}
 
 ---------------------------
  
