@@ -324,7 +324,7 @@ and the following typing rule:
 ----------- ⊢zap
 Γ ⊢ zap ⦂ A
 Which of the following properties remain true in the presence of these rules? For each property, write either “remains true” or “becomes false.” If a property becomes false, give a counterexample:
----------------------------------------------------------------------------------------------
+===========================================================================================
 Determinism of step : false, any term can either be reduced as usual or be reduced to "zap".
 
 Progress : true, as long as we do not require determinism.
@@ -335,7 +335,7 @@ Preservation : true, zap has the same type as original term.
 {-
 Quiz
 Suppose instead that we remove the rule ξ·₁ from the step relation. Which of the following properties remain true in the absence of this rule? For each one, write either “remains true” or else “becomes false.” If a property becomes false, give a counterexample:
------------------------------------------------------------------------------------------
+===============================================================================================
 Determinism of step : true, no ambiguity is introduced.
 
 Progress : false, we cannot reduce a term to a value when the term needs "ξ·₁" to reduce, which is essential.

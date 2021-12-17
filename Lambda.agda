@@ -37,6 +37,7 @@ data Term : Set where
   `suc_                   :  Term → Term
   case_[zero⇒_|suc_⇒_]    :  Term → Term → Id → Term → Term -- "if" on Nat
   μ_⇒_                    :  Id → Term → Term     -- fixpoint for recursion
+  `tt                       : Term
 
 -- Example expressions.
 
@@ -115,14 +116,9 @@ data Value : Term → Set where
       ---------------
     → Value (ƛ x ⇒ N)
 
-  V-zero :
+  V-unit :
       -----------
-      Value `zero
-
-  V-suc : ∀ {V}
-    → Value V
-      --------------
-    → Value (`suc V)
+      Value `tt 
 
 -- Substitution is important in defining reduction.
 -- Defined here only for closed terms (simpler).
@@ -145,7 +141,7 @@ _[_:=_] : Term → Id → Term → Term
 (μ x ⇒ N) [ y := V ] with x ≟ y
 ... | yes _          =  μ x ⇒ N
 ... | no  _          =  μ x ⇒ N [ y := V ]
-
+`tt [ x := x₁ ] = `tt
 
 -- Some examples of substitution.
 
@@ -272,6 +268,7 @@ data _—↠′_ : Term → Term → Set where
 -- Agda can fill in the justifications but not the intermediate terms. Why not?
 -- We'll see how to get Agda to do that in 747Properties (it's really cool).
 
+{-
 _ : twoᶜ · sucᶜ · `zero —↠ `suc `suc `zero
 _ =
   begin
@@ -280,52 +277,12 @@ _ =
     sucᶜ · (sucᶜ · `zero)                     —→⟨ ξ-·₂ V-ƛ (β-ƛ V-zero) ⟩
     sucᶜ · `suc `zero                         —→⟨ β-ƛ (V-suc V-zero) ⟩
     `suc (`suc `zero)                        ∎
+-}
 
--- Two plus two is four.
-
-_ : plus · two · two —↠ `suc `suc `suc `suc `zero
-_ =
-  begin
-    (plus · two) · two                          —→⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
-    ((ƛ "m" ⇒ ƛ "n" ⇒
-      case ` "m" [zero⇒ ` "n"
-                 |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-        · two) · two                            —→⟨ ξ-·₁ (β-ƛ (V-suc (V-suc V-zero))) ⟩
-    (ƛ "n" ⇒
-      case two [zero⇒ ` "n"
-               |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-         · two                                  —→⟨ β-ƛ (V-suc (V-suc V-zero)) ⟩
-    case two [zero⇒ two |suc "m" ⇒ `suc (plus · ` "m" · two) ]
-  —→⟨ β-suc (V-suc V-zero) ⟩
-    `suc (plus · `suc `zero · two)
-  —→⟨ ξ-suc (ξ-·₁ (ξ-·₁ β-μ)) ⟩
-    `suc ((ƛ "m" ⇒ ƛ "n" ⇒
-      case ` "m" [zero⇒ ` "n" |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-        · `suc `zero · two)
-  —→⟨ ξ-suc (ξ-·₁ (β-ƛ (V-suc V-zero))) ⟩
-    `suc ((ƛ "n" ⇒
-      case `suc `zero [zero⇒ ` "n" |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-        · two)
-  —→⟨ ξ-suc (β-ƛ (V-suc (V-suc V-zero))) ⟩
-    `suc (case `suc `zero [zero⇒ two |suc "m" ⇒ `suc (plus · ` "m" · two) ])
-  —→⟨ ξ-suc (β-suc V-zero) ⟩
-    `suc `suc (plus · `zero · two)
-  —→⟨ ξ-suc (ξ-suc (ξ-·₁ (ξ-·₁ β-μ))) ⟩
-    `suc `suc ((ƛ "m" ⇒ ƛ "n" ⇒
-      case ` "m" [zero⇒ ` "n" |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-        · `zero · two)
-  —→⟨ ξ-suc (ξ-suc (ξ-·₁ (β-ƛ V-zero))) ⟩
-    `suc `suc ((ƛ "n" ⇒
-      case `zero [zero⇒ ` "n" |suc "m" ⇒ `suc (plus · ` "m" · ` "n") ])
-        · two)
-  —→⟨ ξ-suc (ξ-suc (β-ƛ (V-suc (V-suc V-zero)))) ⟩
-    `suc `suc (case `zero [zero⇒ two |suc "m" ⇒ `suc (plus · ` "m" · two) ])
-  —→⟨ ξ-suc (ξ-suc β-zero) ⟩
-    `suc (`suc (`suc (`suc `zero)))
-  ∎
 
 -- A longer example of a multistep reduction.
 
+{-
 _ : fourᶜ · sucᶜ · `zero —↠ `suc `suc `suc `suc `zero
 _ =
   begin
@@ -357,6 +314,7 @@ _ =
   —→⟨ β-ƛ (V-suc (V-suc (V-suc V-zero))) ⟩
    `suc (`suc (`suc (`suc `zero)))
   ∎
+-}
 
 -- Adding types to our language.
 
@@ -366,7 +324,7 @@ infixr 7 _⇒_
 
 data Type : Set where
   _⇒_ : Type → Type → Type
-  `ℕ : Type
+  `⊤ : Type
 
 -- Contexts provide types for free variables.
 -- Essentially a list of (name, type) pairs, most recently added to right.
@@ -436,25 +394,6 @@ data _⊢_⦂_ : Context → Term → Type → Set where
       -------------
     → Γ ⊢ L · M ⦂ B
 
-  -- ℕ-I₁
-  ⊢zero : ∀ {Γ}
-      --------------
-    → Γ ⊢ `zero ⦂ `ℕ
-
-  -- ℕ-I₂
-  ⊢suc : ∀ {Γ M}
-    → Γ ⊢ M ⦂ `ℕ
-      ---------------
-    → Γ ⊢ `suc M ⦂ `ℕ
-
-  -- ℕ-E
-  ⊢case : ∀ {Γ L M x N A}
-    → Γ ⊢ L ⦂ `ℕ
-    → Γ ⊢ M ⦂ A
-    → Γ , x ⦂ `ℕ ⊢ N ⦂ A
-      -------------------------------------
-    → Γ ⊢ case L [zero⇒ M |suc x ⇒ N ] ⦂ A
-
   ⊢μ : ∀ {Γ x M A}
     → Γ , x ⦂ A ⊢ M ⦂ A
       -----------------
@@ -481,18 +420,7 @@ Ch A = (A ⇒ A) ⇒ A ⇒ A
     ts : Γ , "s" ⦂ A ⇒ A , "z" ⦂ A ⊢ ` "s" ⦂ A ⇒ A
     ts = ⊢` (S′ Z)
 
-⊢two : ∀ {Γ} → Γ ⊢ two ⦂ `ℕ
-⊢two = ⊢suc (⊢suc ⊢zero)
 
--- A typing derivation for "two plus two".
--- Done in arbitrary contexts to permit reuse.
-
-⊢plus : ∀ {Γ} → Γ ⊢ plus ⦂ `ℕ ⇒ `ℕ ⇒ `ℕ
-⊢plus = ⊢μ (⊢ƛ (⊢ƛ (⊢case (⊢` (S′ Z)) (⊢` Z)
-  (⊢suc (((⊢` (S′ (S′ (S′ Z)))) · ⊢` Z) · ⊢` (S′ Z))))))
-
-⊢2+2 : ∅ ⊢ plus · two · two ⦂ `ℕ
-⊢2+2 = (⊢plus · ⊢two) · ⊢two
 
 ⊢plusᶜ : ∀ {Γ A} → Γ  ⊢ plusᶜ ⦂ Ch A ⇒ Ch A ⇒ Ch A
 ⊢plusᶜ = ⊢ƛ (⊢ƛ (⊢ƛ (⊢ƛ (((⊢` (S′ (S′ (S′ Z)))) · (⊢` (S′ Z))) ·
@@ -500,11 +428,13 @@ Ch A = (A ⇒ A) ⇒ A ⇒ A
 
 -- The rest of the Church examples.
 
+{-
 ⊢sucᶜ : ∀ {Γ} → Γ ⊢ sucᶜ ⦂ `ℕ ⇒ `ℕ
 ⊢sucᶜ = ⊢ƛ (⊢suc (⊢` Z))
 
 ⊢2+2ᶜ : ∅ ⊢ plusᶜ · twoᶜ · twoᶜ · sucᶜ · `zero ⦂ `ℕ
 ⊢2+2ᶜ = ((⊢plusᶜ · ⊢twoᶜ) · ⊢twoᶜ) · ⊢sucᶜ · ⊢zero
+-}
 
 -- Lookup is injective (a helper for what follows)
 
