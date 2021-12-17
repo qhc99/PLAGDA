@@ -304,9 +304,37 @@ neg (suc x) <? neg (suc x₁)  with neg x <? neg x₁
 -- remove `zero, `suc and case_[zero⇒_|suc_⇒_] from values and `ℕ from the types;
 --  add `unit to the values and `⊤ to the types.
 --   (remove everything that is directly about those 3 items, except for the Church-numerals)
--- change sucᶜ to return something in the shapre of a Church numeral
+-- change sucᶜ to return something in the shape of a Church numeral
 -- What does twoᶜ · sucᶜ · `unit now reduce to?
+{-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+We should have the below rule:
+
+sucᶜ ∙ oneᶜ ≡ twoᶜ
+sucᶜ ∙ (ƛ "s" ⇒ ƛ "z" ⇒ (` "s" · ` "z")) ≡  ƛ "s" ⇒ ƛ "z" ⇒ ` "s" · (` "s" · ` "z")
+
+Then we have sucᶜ:
+
+sucᶜ : Term
+sucᶜ = ƛ "n" ⇒ ƛ "s" ⇒ ƛ "z" ⇒ ` "s" ·  (` "n" · ` "s" · ` "z")
+
+We have: twoᶜ · sucᶜ · `unit ≡ sucᶜ ∙ sucᶜ ∙ `unit
+But to get a meaningful result for "sucᶜ ∙ sucᶜ ∙ `unit", we should set sucᶜ:
+
+sucᶜ : Term
+sucᶜ = ƛ "z" ⇒ ƛ "s" ⇒ ` "s" · ` "z"
+
+Then "sucᶜ ∙ sucᶜ ∙ `unit" reduced to "(ƛ "s" ⇒ ` "s" · (ƛ "s" ⇒ ` "s" · ` "z"))"
+#####################################################################################
+-}
+
 -- ⊢sucᶜ has a different types -- what?
+{-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Ch-suc : Type → Type
+Ch-suc A  =  A ⇒ (A ⇒ A) ⇒ A
+#####################################################################################
+-}
 
 -- Modify Properties.agda in the same way, proving progress and preservation.
 
@@ -324,23 +352,25 @@ and the following typing rule:
 ----------- ⊢zap
 Γ ⊢ zap ⦂ A
 Which of the following properties remain true in the presence of these rules? For each property, write either “remains true” or “becomes false.” If a property becomes false, give a counterexample:
-===========================================================================================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Determinism of step : false, any term can either be reduced as usual or be reduced to "zap".
 
 Progress : true, as long as we do not require determinism.
 
 Preservation : true, zap has the same type as original term.
+#####################################################################################
 -}
 
 {-
 Quiz
 Suppose instead that we remove the rule ξ·₁ from the step relation. Which of the following properties remain true in the absence of this rule? For each one, write either “remains true” or else “becomes false.” If a property becomes false, give a counterexample:
-===============================================================================================
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 Determinism of step : true, no ambiguity is introduced.
 
 Progress : false, we cannot reduce a term to a value when the term needs "ξ·₁" to reduce, which is essential.
 
-Preservation : true, the type of a term is intact thought the term cannot be reduced to a value. 
+Preservation : true, the type of a term is intact thought the term cannot be reduced to a value.
+#####################################################################################
 -}
 
 ---------------------------
