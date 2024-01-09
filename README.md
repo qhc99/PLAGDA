@@ -1,1 +1,1 @@
-Agda programming language repo.
+Proof assistant programming language.
